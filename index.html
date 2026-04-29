@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ea580c">
+  <title>파트너스 활동 관리</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap');
+    body { font-family: 'Pretendard', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+    .hidden-view { display: none !important; }
+    .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  </style>
+</head>
+<body class="flex justify-center items-center min-h-screen sm:p-4">
+
+  <div class="w-full h-[100vh] sm:h-[850px] sm:max-w-md bg-white sm:rounded-[2rem] sm:shadow-2xl overflow-hidden flex flex-col relative shadow-inner">
+
+    <div id="view-login" class="flex flex-col items-center justify-center h-full p-8 fade-in bg-[#f8fafc]">
+      <div class="w-24 h-24 bg-[#ea580c] rounded-3xl flex items-center justify-center shadow-lg mb-8"><i data-lucide="calendar" class="w-12 h-12 text-white"></i></div>
+      <div class="text-center space-y-2 mb-12"><h1 class="text-2xl font-bold text-gray-800">파트너스 활동 관리</h1><p class="text-gray-500 text-sm mt-2">영업 활동을 스마트하게 기록하세요.</p></div>
+      <div class="w-full space-y-3">
+        <button onclick="selectLoginMode(false)" class="w-full bg-white border border-gray-300 text-gray-700 font-bold py-4 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-3 active:scale-95 transition">
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5"/><span>Google 계정으로 시작하기</span>
+        </button>
+        <button onclick="selectLoginMode(true)" class="w-full bg-slate-100 text-slate-600 font-bold py-4 px-4 rounded-xl shadow-sm flex items-center justify-center active:scale-95 transition text-sm">
+          구글계정 연결없이 사용하기 (수동입력)
+        </button>
+      </div>
+    </div>
+
+    <div id="view-setup" class="hidden-view flex flex-col h-full p-6 fade-in bg-white">
+      <h2 class="text-2xl font-bold text-gray-900 mb-8 mt-4">기본 정보 입력</h2>
+      <div class="space-y-6 flex-1">
+        <div><label class="block text-sm font-bold text-gray-700 mb-2">파트너 이름</label><input type="text" id="inputName" class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none"></div>
+        <div><label class="block text-sm font-bold text-gray-700 mb-2">파트너 사번</label><input type="text" id="inputEmpId" class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none"></div>
+        <button onclick="verifyPartner()" id="btnVerify" class="w-full bg-[#1e293b] text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 transition">소속 정보 확인</button>
+        <div id="affiliationInfo" class="hidden-view bg-[#f8fafc] p-4 rounded-xl border border-slate-200 flex items-center space-x-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600"></i><div><p class="text-[11px] font-bold text-slate-500">인증 완료</p><p id="affiliationText" class="text-sm font-bold text-slate-800 mt-0.5">소속: -</p></div></div>
+      </div>
+      <button id="btnStart" disabled onclick="startApp()" class="w-full bg-gray-300 text-white font-bold py-4 rounded-xl mt-4 transition">시작하기</button>
+    </div>
+
+    <div id="view-app" class="hidden-view flex flex-col h-full bg-[#f8fafc] relative">
+      <div class="bg-white px-6 py-4 rounded-b-3xl shadow-sm z-10 flex justify-between items-center border-b border-slate-100">
+        <div>
+          <h2 class="text-lg font-bold text-gray-900"><span id="displayName">파트너</span>님, 환영합니다</h2>
+          <div class="flex items-center text-[10px] font-bold text-emerald-600 mt-1" id="syncStatusMsg">데이터 연동 대기중...</div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <div class="text-right">
+            <div class="text-sm font-bold text-slate-800" id="headerWeek">0주차</div>
+            <div class="text-[10px] font-medium text-slate-500" id="headerDate">YYYY-MM-DD(요일)</div>
+          </div>
+          <button onclick="manualReload()" class="p-1.5 rounded-full bg-orange-50 active:scale-90 transition cursor-pointer"><i data-lucide="refresh-cw" id="headerReloadIcon" class="w-5 h-5 text-[#ea580c]"></i></button>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4 pb-24 relative" id="mainContentArea">
+        
+        <div id="tab-home" class="fade-in space-y-6">
+          <section>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-[16px] text-slate-800 border-l-4 border-[#ea580c] pl-2">이번 주 활동 진도 (목표 대비)</h3>
+              <p class="text-[10px] text-slate-400">설정된 목표 기준</p>
+            </div>
+            <div id="home-progress-container" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-5">
+              <p class="text-center text-slate-400 py-8 text-xs">데이터 로딩 중...</p>
+            </div>
+          </section>
+
+          <section>
+            <div class="flex items-center justify-between mb-4 mt-6">
+              <h3 class="font-bold text-[16px] text-slate-800 border-l-4 border-blue-600 pl-2">다음 주 활동 예정 현황</h3>
+              <p class="text-[10px] text-slate-400" id="homeNextWeekLabel">0주차</p>
+            </div>
+            <div id="home-next-status" class="grid grid-cols-2 gap-3 pb-4"></div>
+          </section>
+        </div>
+
+        <div id="tab-activity" class="hidden-view fade-in"><div id="cardsContainer"></div></div>
+        
+        <div id="tab-stats" class="hidden-view fade-in">
+          <div class="flex justify-between items-start px-1" style="margin-top: 4px;">
+            <p class="text-[11px] text-slate-500 leading-relaxed flex-1">누적 활동 결과에 따른 통계입니다.<br>활동관리에 참고하시기 바랍니다.</p>
+            <select id="statsPeriod" onchange="loadStatsData()" class="w-24 ml-2 text-[11px] bg-white border border-slate-200 rounded-lg px-1 py-1.5 outline-none font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500 text-center">
+              <option value="50">직전 50주</option><option value="25">직전 25주</option><option value="12">직전 12주</option><option value="4">직전 4주</option>
+            </select>
+          </div>
+          <div style="height: 36px;"></div>
+          <h3 class="font-bold text-[15px] text-slate-800 px-1 border-l-4 border-[#ea580c] pl-2">활동 예정 대비 결과 확률</h3>
+          <div id="statsGrid" class="mt-3 px-1"></div>
+          <div style="height: 48px;"></div>
+          <h3 class="font-bold text-[15px] text-slate-800 px-1 border-l-4 border-blue-600 pl-2">나의 활동 간 확률</h3>
+          <div id="convGrid" class="grid grid-cols-2 gap-3 mt-3 px-1"></div>
+        </div>
+        
+        <div id="tab-settings" class="hidden-view fade-in p-2 space-y-4">
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-center">
+             <div><p class="text-xs font-bold text-slate-500 mb-1">인증된 파트너 정보</p><p class="text-xl font-bold text-slate-900 mt-2" id="settingName">-</p><p class="text-sm font-bold text-[#ea580c] mt-1" id="settingTeam">-</p></div>
+             <hr class="my-5 border-slate-100"><button onclick="logout()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition active:scale-95 text-sm">로그아웃</button>
+             <p class="text-[10px] text-slate-400 mt-2">다른 계정이나 사번으로 접속하시려면 로그아웃 해주세요.</p>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-[15px] text-slate-800 mb-4 border-b border-slate-100 pb-2 text-left">나의 주간 활동 목표</h3>
+            <div class="grid grid-cols-3 gap-3 mb-4">
+              <div class="text-center"><div class="text-[11px] font-bold text-slate-500 mb-1">TA</div><input type="number" id="goal_TA" oninput="calcGoalSum()" class="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-orange-500"></div>
+              <div class="text-center"><div class="text-[11px] font-bold text-slate-500 mb-1">AP</div><input type="number" id="goal_AP" oninput="calcGoalSum()" class="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-orange-500"></div>
+              <div class="text-center"><div class="text-[11px] font-bold text-slate-500 mb-1">P</div><input type="number" id="goal_P" oninput="calcGoalSum()" class="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-orange-500"></div>
+              <div class="text-center"><div class="text-[11px] font-bold text-slate-500 mb-1">C</div><input type="number" id="goal_C" oninput="calcGoalSum()" class="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-orange-500"></div>
+              <div class="text-center"><div class="text-[11px] font-bold text-slate-500 mb-1">N</div><input type="number" id="goal_N" oninput="calcGoalSum()" class="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-orange-500"></div>
+              <div class="text-center"><div class="text-[11px] font-bold text-slate-500 mb-1">소개</div><input type="number" id="goal_소개" oninput="calcGoalSum()" class="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-orange-500"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-5">
+              <div class="text-center"><div class="text-[11px] font-bold text-emerald-700 mb-1">활동계 (자동)</div><input type="number" id="goal_활동계" readonly class="w-full text-center py-2 bg-emerald-50 border border-emerald-200 rounded-lg font-bold text-emerald-800 outline-none cursor-default"></div>
+              <div class="text-center"><div class="text-[11px] font-bold text-slate-500 mb-1">보험료</div><input type="text" id="goal_보험료" oninput="formatCurrency(this)" class="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 outline-none"></div>
+            </div>
+            <button onclick="saveUserGoals()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl transition active:scale-95 text-sm shadow-md">목표 저장하기</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 flex justify-around pb-6 pt-3 sm:rounded-b-[2rem]">
+        <button onclick="switchTab('tab-home', this)" class="nav-btn flex flex-col items-center text-[#ea580c]"><i data-lucide="home" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">홈</span></button>
+        <button onclick="switchTab('tab-activity', this)" class="nav-btn flex flex-col items-center text-gray-400"><i data-lucide="calendar" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">활동 기록</span></button>
+        <button onclick="switchTab('tab-stats', this)" class="nav-btn flex flex-col items-center text-gray-400"><i data-lucide="bar-chart-2" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">통계</span></button>
+        <button onclick="switchTab('tab-settings', this)" class="nav-btn flex flex-col items-center text-gray-400"><i data-lucide="settings" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">설정</span></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // ==========================================
+    // [필독] 백엔드(구글 앱스 스크립트) URL 입력
+    // ==========================================
+    const API_URL = "https://script.google.com/macros/s/AKfycbzMULbAaJw6HUBnKlALwgfV08uv3D4Su6JPbMnLPQ0F3sXb_CjJcTl9GBlJB2TAHHXs/exec"; // <--- 꼭 수정해주세요!
+
+    let globalData = { isManualMode: false, goals: {} };
+    let weekContext = {}; 
+    let lastFetchedData = null; 
+    let isWeekClosed = false;
+    const stages = ['TA', 'AP', 'P', 'C', 'N', '소개'];
+    const dashboardStages = [...stages, '활동계', '보험료'];
+
+    let statsCache = {};
+    const CACHE_TTL = 15 * 60 * 1000; 
+
+    window.onload = function() {
+      const savedUser = localStorage.getItem('partnersAppUser');
+      if (savedUser) { globalData = JSON.parse(savedUser); setupUserSettings(); switchView('view-app'); initActivityScreen(); } 
+      else { switchView('view-login'); }
+    };
+
+    // [신규] 깃허브 외부 통신용 Fetch API 래퍼
+    async function callApi(data) {
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // CORS 회피용 text/plain
+          body: JSON.stringify(data)
+        });
+        return await response.json();
+      } catch (err) {
+        console.error("API 통신 오류:", err);
+        alert("서버 연결에 실패했습니다. (인터넷 또는 URL 확인 필요)");
+        return null;
+      }
+    }
+
+    function switchView(viewId) {
+      document.querySelectorAll('div[id^="view-"]').forEach(el => el.classList.add('hidden-view'));
+      document.getElementById(viewId).classList.remove('hidden-view');
+    }
+
+    function selectLoginMode(isManual) { globalData.isManualMode = isManual; switchView('view-setup'); }
+
+    // [수정] async/await 적용
+    async function verifyPartner() {
+      const name = document.getElementById('inputName').value;
+      const empId = document.getElementById('inputEmpId').value;
+      if (!name || !empId) return;
+      
+      document.getElementById('btnVerify').innerText = "확인 중...";
+      
+      const res = await callApi({ action: 'verify', name, empId });
+      
+      document.getElementById('btnVerify').innerText = "소속 정보 확인";
+      if(res && res.success) {
+        globalData.name = name; globalData.empId = empId; globalData.teamName = res.teamName;
+        document.getElementById('affiliationText').innerText = `소속: ${res.teamName}`;
+        document.getElementById('affiliationInfo').classList.remove('hidden-view');
+        document.getElementById('btnStart').disabled = false;
+        document.getElementById('btnStart').className = "w-full bg-[#ea580c] text-white font-bold py-4 rounded-xl mt-4 active:scale-95 transition shadow-lg";
+      } else if (res) {
+        alert(res.message);
+      }
+    }
+
+    function setupUserSettings() {
+      document.getElementById('displayName').innerText = globalData.name;
+      document.getElementById('settingName').innerText = `${globalData.name} (${globalData.empId})`;
+      document.getElementById('settingTeam').innerText = globalData.teamName || '-';
+      if (globalData.goals) { dashboardStages.forEach(field => { const el = document.getElementById(`goal_${field}`); if (el) el.value = globalData.goals[field] || ''; }); }
+    }
+
+    function calcGoalSum() {
+      let sum = 0; stages.forEach(s => { sum += parseInt(document.getElementById(`goal_${s}`).value) || 0; });
+      document.getElementById('goal_활동계').value = sum;
+    }
+
+    function saveUserGoals() {
+      const newGoals = {}; dashboardStages.forEach(field => { newGoals[field] = document.getElementById(`goal_${field}`).value; });
+      globalData.goals = newGoals; localStorage.setItem('partnersAppUser', JSON.stringify(globalData));
+      alert("목표가 저장되었습니다. 홈 화면에서 반영된 내용을 확인하세요!");
+      renderHomeDashboard();
+    }
+
+    function startApp() { localStorage.setItem('partnersAppUser', JSON.stringify(globalData)); setupUserSettings(); switchView('view-app'); initActivityScreen(); }
+    function logout() { localStorage.removeItem('partnersAppUser'); location.reload(); }
+
+    function calculateCustomWeek() {
+      const today = new Date(); const days = ['일', '월', '화', '수', '목', '금', '토'];
+      const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0') + '(' + days[today.getDay()] + ')';
+      let baseDate = new Date(today); if (today.getDay() === 1) baseDate.setDate(baseDate.getDate() - 1);
+      baseDate.setHours(0, 0, 0, 0); baseDate.setDate(baseDate.getDate() + 3 - (baseDate.getDay() + 6) % 7);
+      const week1 = new Date(baseDate.getFullYear(), 0, 4);
+      const currWeek = Math.round(((baseDate.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7) + 1;
+      const monday = new Date(baseDate); monday.setDate(monday.getDate() - (monday.getDay() || 7) + 1);
+      const currMonday = monday.getFullYear() + '-' + String(monday.getMonth() + 1).padStart(2, '0') + '-' + String(monday.getDate()).padStart(2, '0');
+      const nextMondayD = new Date(monday); nextMondayD.setDate(nextMondayD.getDate() + 7);
+      const nextMonday = nextMondayD.getFullYear() + '-' + String(nextMondayD.getMonth() + 1).padStart(2, '0') + '-' + String(nextMondayD.getDate()).padStart(2, '0');
+      const nextWeek = (currWeek === 52 || currWeek === 53) ? 1 : currWeek + 1;
+      const nextYear = nextWeek === 1 ? baseDate.getFullYear() + 1 : baseDate.getFullYear();
+      return { todayStr, currYear: baseDate.getFullYear(), currWeek, currMonday, nextYear, nextWeek, nextMonday };
+    }
+
+    function formatCurrency(input) { let val = input.value.replace(/[^0-9]/g, ''); input.value = val ? parseInt(val, 10).toLocaleString() : ''; }
+
+    function buildCardHtml(cardId, weekStr, dateStr, type, isExpanded, colorClass) {
+      const toggleIcon = isExpanded ? 'chevron-up' : 'chevron-down';
+      const bodyClass = isExpanded ? '' : 'hidden-view';
+      let html = `<div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm mb-4 transition-all"><div class="bg-slate-50 px-4 py-3 flex justify-between items-center border-b border-slate-100 cursor-pointer active:bg-slate-100" onclick="toggleCard('${cardId}')"><span class="font-bold text-slate-800">${weekStr}주차 <span class="text-xs font-normal text-slate-500 ml-1">${dateStr}</span></span><span class="text-sm font-bold ${colorClass}">${type} <i data-lucide="${toggleIcon}" id="icon-${cardId}" class="w-4 h-4 inline transition-transform"></i></span></div><div id="body-${cardId}" class="p-4 bg-white ${bodyClass}"><div class="grid grid-cols-3 gap-3 mb-4">`;
+      stages.forEach(s => { html += `<div class="text-center"><div class="text-[11px] font-bold text-slate-500 mb-1">${s}</div><input type="number" id="input_${cardId}_${s}" oninput="calcSum('${cardId}')" class="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 focus:ring-2 focus:ring-[#ea580c] outline-none"></div>`; });
+      html += `</div><div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-emerald-50 rounded-lg p-3 border border-emerald-100 flex flex-col justify-center items-center"><span class="text-[10px] font-bold text-emerald-700 mb-1">활동계</span><span id="sum_${cardId}" class="text-lg font-bold text-emerald-900">0</span></div><div><span class="block text-[10px] text-center font-bold text-slate-500 mb-1">보험료</span><input type="text" id="input_${cardId}_보험료" oninput="formatCurrency(this)" class="w-full text-center py-2.5 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 focus:ring-2 focus:ring-[#ea580c] outline-none"></div></div>`;
+      if (cardId === 'nextPlan') { html += `<div class="border-t border-slate-100 pt-4 mt-2"><button onclick="handleMainAction()" id="btnMainAction" class="w-full bg-[#ea580c] text-white font-bold py-3.5 rounded-xl active:scale-95 text-sm transition shadow-md">처리중...</button></div>`; }
+      html += `</div></div>`; return html;
+    }
+
+    function initActivityScreen() {
+      weekContext = calculateCustomWeek();
+      document.getElementById('headerWeek').innerText = `${weekContext.currWeek}주차`;
+      document.getElementById('headerDate').innerText = weekContext.todayStr;
+      document.getElementById('homeNextWeekLabel').innerText = `${weekContext.nextWeek}주차 (${weekContext.nextMonday})`;
+      document.getElementById('cardsContainer').innerHTML = 
+        buildCardHtml('currPlan', weekContext.currWeek, weekContext.currMonday, '예정', false, 'text-blue-600') +
+        buildCardHtml('currActual', weekContext.currWeek, weekContext.currMonday, '결과', true, 'text-[#ea580c]') +
+        buildCardHtml('nextPlan', weekContext.nextWeek, weekContext.nextMonday, '예정', true, 'text-blue-600');
+      lucide.createIcons(); loadActivityData();
+    }
+
+    function toggleCard(cardId) {
+      const body = document.getElementById(`body-${cardId}`); const icon = document.getElementById(`icon-${cardId}`);
+      if (body.classList.contains('hidden-view')) { body.classList.remove('hidden-view'); icon.setAttribute('data-lucide', 'chevron-up'); } 
+      else { body.classList.add('hidden-view'); icon.setAttribute('data-lucide', 'chevron-down'); }
+      lucide.createIcons();
+    }
+
+    function calcSum(cardId) { let sum = 0; stages.forEach(s => { sum += parseInt(document.getElementById(`input_${cardId}_${s}`).value) || 0; }); document.getElementById(`sum_${cardId}`).innerText = sum; }
+
+    function fillCardData(cardId, dataObj) {
+      if(!dataObj) return; stages.forEach(s => { document.getElementById(`input_${cardId}_${s}`).value = dataObj[s] || ''; });
+      const prm = document.getElementById(`input_${cardId}_보험료`); prm.value = dataObj['보험료'] || ''; formatCurrency(prm);
+      calcSum(cardId); stages.forEach(s => document.getElementById(`input_${cardId}_${s}`).disabled = isWeekClosed); prm.disabled = isWeekClosed;
+    }
+
+    function updateMainButtonState() {
+      const btnMain = document.getElementById('btnMainAction'); if (!btnMain) return;
+      if (isWeekClosed) { btnMain.className = "w-full bg-slate-300 text-slate-700 font-bold py-3.5 rounded-xl active:scale-95 text-sm transition shadow-md"; btnMain.innerText = globalData.isManualMode ? "저장취소 (수정하기)" : "주 마감취소"; } 
+      else { btnMain.className = "w-full bg-[#ea580c] text-white font-bold py-3.5 rounded-xl active:scale-95 text-sm transition shadow-md"; btnMain.innerText = globalData.isManualMode ? "저장하기" : "주 마 마감하기"; }
+    }
+
+    function manualReload() { statsCache = {}; loadActivityData(); }
+
+    // [수정] async/await 적용
+    async function loadActivityData() {
+      const reloadIcon = document.getElementById('headerReloadIcon'); if(reloadIcon) reloadIcon.classList.add('animate-spin');
+      
+      const res = await callApi({
+        action: 'getData',
+        empId: globalData.empId, name: globalData.name, teamName: globalData.teamName,
+        currYear: weekContext.currYear, currWeek: weekContext.currWeek,
+        nextYear: weekContext.nextYear, nextWeek: weekContext.nextWeek,
+        isManualMode: globalData.isManualMode
+      });
+
+      if(reloadIcon) reloadIcon.classList.remove('animate-spin');
+      
+      if(res) {
+        document.getElementById('syncStatusMsg').innerHTML = `<div class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></div> 바인딩 완료`;
+        lastFetchedData = res; isWeekClosed = res.isClosed; 
+        fillCardData('currPlan', res.currPlan); fillCardData('currActual', res.currActual); fillCardData('nextPlan', res.nextPlan); updateMainButtonState();
+        renderHomeDashboard();
+        prefetchStatsData();
+      }
+    }
+
+    // [수정] async/await 적용
+    async function prefetchStatsData() {
+      const weeksLimit = document.getElementById('statsPeriod').value;
+      const res = await callApi({
+        action: 'getStats',
+        empId: globalData.empId, weeksLimit: weeksLimit,
+        year: weekContext.currYear, week: weekContext.currWeek
+      });
+      if(res) {
+        statsCache[weeksLimit] = { data: res, time: Date.now() };
+      }
+    }
+
+    function renderHomeDashboard() {
+      if (!lastFetchedData) return;
+      const actual = lastFetchedData.currActual;
+      const next = lastFetchedData.nextPlan;
+      const goals = globalData.goals || {};
+
+      const progHtml = dashboardStages.map(s => {
+        const goalStr = String(goals[s] || '0').replace(/[^0-9]/g, '');
+        const actualStr = String(actual[s] || '0').replace(/[^0-9]/g, '');
+        const goalVal = parseInt(goalStr, 10) || 0;
+        const actualVal = parseInt(actualStr, 10) || 0;
+        
+        const ratio = goalVal > 0 ? Math.min(Math.round((actualVal / goalVal) * 100), 100) : (actualVal > 0 ? 100 : 0);
+        let colorClass = 'bg-red-500'; if (ratio >= 85) colorClass = 'bg-emerald-500'; else if (ratio >= 70) colorClass = 'bg-amber-500';
+
+        let displayActual = actualVal.toLocaleString();
+        let displayGoal = goalVal.toLocaleString();
+        if (s === '보험료') { displayActual += '원'; displayGoal += '원'; }
+
+        return `
+        <div class="space-y-1.5">
+          <div class="flex justify-between text-[13px] font-bold text-slate-700">
+            <span>${s}</span>
+            <span class="text-slate-400 font-normal">${displayActual} / <span class="font-bold text-slate-600">${displayGoal}</span></span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+            <div class="${colorClass} h-full transition-all duration-1000" style="width: ${ratio}%"></div>
+          </div>
+        </div>`;
+      }).join('');
+      document.getElementById('home-progress-container').innerHTML = progHtml;
+
+      const filteredStages = ['AP', 'P', 'C', 'N'];
+      const nextHtml = filteredStages.map(s => `<div class="bg-white border border-slate-100 rounded-xl p-3 shadow-sm flex flex-col items-center"><span class="text-[10px] font-bold text-slate-400 mb-1">${s}</span><span class="text-[18px] font-black text-blue-600">${next[s] || 0}</span></div>`).join('');
+      document.getElementById('home-next-status').innerHTML = nextHtml;
+    }
+
+    // [수정] async/await 적용
+    async function handleMainAction() {
+      statsCache = {}; 
+      if (isWeekClosed) {
+        if(!confirm("수정을 위해 취소하시겠습니까?")) return;
+        document.getElementById('btnMainAction').innerText = "처리 중...";
+        
+        const res = await callApi({
+          action: 'cancel', empId: globalData.empId,
+          currYear: weekContext.currYear, currWeek: weekContext.currWeek,
+          nextYear: weekContext.nextYear, nextWeek: weekContext.nextWeek
+        });
+        if(res) { alert(res.message); loadActivityData(); }
+
+      } else {
+        let hasEmptyField = false; const fieldsToCheck = [...stages, '보험료'];
+        fieldsToCheck.forEach(s => { if (document.getElementById(`input_currActual_${s}`).value.trim() === '') hasEmptyField = true; });
+        fieldsToCheck.forEach(s => { if (document.getElementById(`input_nextPlan_${s}`).value.trim() === '') hasEmptyField = true; });
+        if (hasEmptyField) { alert("결과 또는 예정 항목에 빈 항목이 있습니다."); return; }
+
+        const msg = globalData.isManualMode ? "이번 주 결과와 다음 주 예정을 모두 저장하시겠습니까?" : "주 마감을 진행하시겠습니까?";
+        if(!confirm(msg)) return;
+
+        document.getElementById('btnMainAction').innerText = "처리 중...";
+        const payload = { empId: globalData.empId, name: globalData.name, teamName: globalData.teamName, currYear: weekContext.currYear, currWeek: weekContext.currWeek, nextYear: weekContext.nextYear, nextWeek: weekContext.nextWeek, currActualValues: getPayloadValues('currActual'), nextPlanValues: getPayloadValues('nextPlan'), isManualMode: globalData.isManualMode };
+        
+        const res = await callApi({ action: 'submit', payload: payload });
+        if(res) { alert(res.message); loadActivityData(); }
+      }
+    }
+
+    function getPayloadValues(cardId) { const values = {}; stages.forEach(s => values[s] = document.getElementById(`input_${cardId}_${s}`).value.replace(/[^0-9]/g, '')); values['활동계'] = document.getElementById(`sum_${cardId}`).innerText.replace(/[^0-9]/g, ''); values['보험료'] = document.getElementById(`input_${cardId}_보험료`).value.replace(/[^0-9]/g, ''); return values; }
+
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('#mainContentArea > div').forEach(el => el.classList.add('hidden-view'));
+      document.getElementById(tabId).classList.remove('hidden-view');
+      document.querySelectorAll('.nav-btn').forEach(el => { el.classList.remove('text-[#ea580c]'); el.classList.add('text-gray-400'); });
+      btn.classList.remove('text-gray-400'); btn.classList.add('text-[#ea580c]');
+      if(tabId === 'tab-stats') loadStatsData();
+      if(tabId === 'tab-home') renderHomeDashboard();
+    }
+
+    // [수정] async/await 적용
+    async function loadStatsData() {
+      const weeksLimit = document.getElementById('statsPeriod').value;
+      if (statsCache[weeksLimit] && (Date.now() - statsCache[weeksLimit].time < CACHE_TTL)) { renderStatsView(statsCache[weeksLimit].data); return; }
+
+      const statsGrid = document.getElementById('statsGrid'); const convGrid = document.getElementById('convGrid');
+      statsGrid.innerHTML = '<div class="text-center py-10 text-slate-400 text-xs">데이터 계산 중...</div>';
+      convGrid.innerHTML = '';
+      
+      const res = await callApi({
+        action: 'getStats',
+        empId: globalData.empId, weeksLimit: weeksLimit,
+        year: weekContext.currYear, week: weekContext.currWeek
+      });
+      if(res) {
+        statsCache[weeksLimit] = { data: res, time: Date.now() }; 
+        renderStatsView(res);
+      }
+    }
+
+    function renderStatsView(data) {
+      const statsGrid = document.getElementById('statsGrid'); const convGrid = document.getElementById('convGrid');
+      const getColors = (val) => { if (val >= 85) return { text: 'text-emerald-600', bg: 'bg-emerald-500' }; if (val >= 70) return { text: 'text-amber-500', bg: 'bg-amber-500' }; return { text: 'text-red-700', bg: 'bg-red-600' }; };
+      const topStages = ['TA', 'AP', 'P', 'C', 'N', '소개']; const bottomStages = ['활동계', '보험료'];
+      const renderStage = (s) => {
+        const d = data.stats[s]; const ratio = d.plan > 0 ? Math.round((d.actual / d.plan)*100) : 0; const colors = getColors(ratio); const barWidth = Math.min(ratio, 100);
+        return `<div class="flex items-center space-x-3 mb-3"><div class="w-[50px] text-right text-[13px] font-extrabold text-slate-600">${s}</div><div class="flex-1 bg-slate-100 rounded-md h-6 relative overflow-hidden shadow-inner"><div class="${colors.bg} h-full rounded-md transition-all duration-700 ease-out" style="width: ${barWidth}%"></div></div><div class="w-12 text-right text-[13px] font-black ${colors.text}">${ratio}%</div></div>`;
+      };
+      statsGrid.innerHTML = topStages.map(renderStage).join('') + `<div class="my-5 border-t border-slate-200 border-dashed"></div>` + bottomStages.map(renderStage).join('');
+
+      const convs = [{l:'주간 유실적률',v:data.conversions.weekly_active,hl:true},{l:'TA / AP',v:data.conversions.ta_ap,hl:true},{l:'AP / N',v:data.conversions.ap_n,hl:true},{l:'AP / 소개',v:data.conversions.ap_intro,hl:true},{l:'AP / P',v:data.conversions.ap_p,hl:false},{l:'P / N',v:data.conversions.p_n,hl:false},{l:'C / N',v:data.conversions.c_n,hl:false},{l:'TA / N',v:data.conversions.ta_n,hl:false}];
+      convGrid.innerHTML = convs.map(c => {
+        const colors = getColors(c.v); const barWidth = Math.min(c.v, 100); const bgHighlight = c.hl ? 'bg-orange-50/50 ring-1 ring-orange-200' : 'bg-white border-slate-200 border';
+        return `<div class="rounded-xl p-3 flex flex-col justify-center shadow-sm ${bgHighlight}"><div class="flex justify-between items-end mb-2"><span class="text-[13px] font-extrabold text-slate-700 tracking-tight">${c.l}</span><span class="text-[13px] font-black ${colors.text} leading-none">${c.v}%</span></div><div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden"><div class="${colors.bg} h-full rounded-full transition-all duration-700 ease-out" style="width: ${barWidth}%"></div></div></div>`;
+      }).join('');
+    }
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Registration failed: ', err));
+      });
+    }
+  </script>
+</body>
+</html>
