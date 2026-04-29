@@ -88,7 +88,10 @@
           <div class="flex justify-between items-start px-1" style="margin-top: 4px;">
             <p class="text-[11px] text-slate-500 leading-relaxed flex-1">누적 활동 결과에 따른 통계입니다.<br>활동관리에 참고하시기 바랍니다.</p>
             <select id="statsPeriod" onchange="loadStatsData()" class="w-24 ml-2 text-[11px] bg-white border border-slate-200 rounded-lg px-1 py-1.5 outline-none font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500 text-center">
-              <option value="50">직전 50주</option><option value="25">직전 25주</option><option value="12">직전 12주</option><option value="4">직전 4주</option>
+              <option value="50">직전 50주</option>
+              <option value="25">직전 25주</option>
+              <option value="12">직전 12주</option>
+              <option value="4">직전 4주</option>
             </select>
           </div>
           <div style="height: 36px;"></div>
@@ -140,7 +143,7 @@
     // ==========================================
     // [필독] 백엔드(구글 앱스 스크립트) URL 입력
     // ==========================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbzMULbAaJw6HUBnKlALwgfV08uv3D4Su6JPbMnLPQ0F3sXb_CjJcTl9GBlJB2TAHHXs/exec"; // <--- 꼭 수정해주세요!
+    const API_URL = "https://script.google.com/macros/s/AKfycbzMULbAaJw6HUBnKlALwgfV08uv3D4Su6JPbMnLPQ0F3sXb_CjJcTl9GBlJB2TAHHXs/exec";
 
     let globalData = { isManualMode: false, goals: {} };
     let weekContext = {}; 
@@ -158,12 +161,11 @@
       else { switchView('view-login'); }
     };
 
-    // [신규] 깃허브 외부 통신용 Fetch API 래퍼
     async function callApi(data) {
       try {
         const response = await fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // CORS 회피용 text/plain
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(data)
         });
         return await response.json();
@@ -181,7 +183,6 @@
 
     function selectLoginMode(isManual) { globalData.isManualMode = isManual; switchView('view-setup'); }
 
-    // [수정] async/await 적용
     async function verifyPartner() {
       const name = document.getElementById('inputName').value;
       const empId = document.getElementById('inputEmpId').value;
@@ -282,13 +283,17 @@
 
     function updateMainButtonState() {
       const btnMain = document.getElementById('btnMainAction'); if (!btnMain) return;
-      if (isWeekClosed) { btnMain.className = "w-full bg-slate-300 text-slate-700 font-bold py-3.5 rounded-xl active:scale-95 text-sm transition shadow-md"; btnMain.innerText = globalData.isManualMode ? "저장취소 (수정하기)" : "주 마감취소"; } 
-      else { btnMain.className = "w-full bg-[#ea580c] text-white font-bold py-3.5 rounded-xl active:scale-95 text-sm transition shadow-md"; btnMain.innerText = globalData.isManualMode ? "저장하기" : "주 마 마감하기"; }
+      if (isWeekClosed) { 
+        btnMain.className = "w-full bg-slate-300 text-slate-700 font-bold py-3.5 rounded-xl active:scale-95 text-sm transition shadow-md"; 
+        btnMain.innerText = globalData.isManualMode ? "저장취소 (수정하기)" : "주 마감취소"; 
+      } else { 
+        btnMain.className = "w-full bg-[#ea580c] text-white font-bold py-3.5 rounded-xl active:scale-95 text-sm transition shadow-md"; 
+        btnMain.innerText = globalData.isManualMode ? "저장하기" : "주 마감하기"; 
+      }
     }
 
     function manualReload() { statsCache = {}; loadActivityData(); }
 
-    // [수정] async/await 적용
     async function loadActivityData() {
       const reloadIcon = document.getElementById('headerReloadIcon'); if(reloadIcon) reloadIcon.classList.add('animate-spin');
       
@@ -311,7 +316,6 @@
       }
     }
 
-    // [수정] async/await 적용
     async function prefetchStatsData() {
       const weeksLimit = document.getElementById('statsPeriod').value;
       const res = await callApi({
@@ -361,7 +365,6 @@
       document.getElementById('home-next-status').innerHTML = nextHtml;
     }
 
-    // [수정] async/await 적용
     async function handleMainAction() {
       statsCache = {}; 
       if (isWeekClosed) {
@@ -399,11 +402,14 @@
       document.getElementById(tabId).classList.remove('hidden-view');
       document.querySelectorAll('.nav-btn').forEach(el => { el.classList.remove('text-[#ea580c]'); el.classList.add('text-gray-400'); });
       btn.classList.remove('text-gray-400'); btn.classList.add('text-[#ea580c]');
+      
+      // [수정] 탭 이동 시 스크롤 위치를 맨 위로 강제 초기화
+      document.getElementById('mainContentArea').scrollTop = 0;
+
       if(tabId === 'tab-stats') loadStatsData();
       if(tabId === 'tab-home') renderHomeDashboard();
     }
 
-    // [수정] async/await 적용
     async function loadStatsData() {
       const weeksLimit = document.getElementById('statsPeriod').value;
       if (statsCache[weeksLimit] && (Date.now() - statsCache[weeksLimit].time < CACHE_TTL)) { renderStatsView(statsCache[weeksLimit].data); return; }
