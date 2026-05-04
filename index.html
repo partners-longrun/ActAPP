@@ -115,7 +115,6 @@
            <p class="text-xl font-bold text-slate-900 mt-2" id="settingName">-</p>
            <p class="text-sm font-bold text-[#ea580c] mt-1 mb-4" id="settingTeam">-</p>
            
-           <!-- 구글 계정 및 캘린더 공유 섹션 -->
            <div id="settingEmailBlock" class="bg-slate-50 rounded-xl p-3 border border-slate-100 mb-4 text-left">
              <p class="text-[10px] font-bold text-slate-400 mb-1">연동된 구글 계정</p>
              <div class="flex items-center justify-between mb-2">
@@ -155,7 +154,7 @@
   <script>
     lucide.createIcons();
     // ==========================================
-    // [필독] 백엔드 URL 입력
+    // [필독] 백엔드 URL 입력 (기존 배포 URL과 동일하게 유지)
     // ==========================================
     const API_URL = "https://script.google.com/macros/s/AKfycbzMULbAaJw6HUBnKlALwgfV08uv3D4Su6JPbMnLPQ0F3sXb_CjJcTl9GBlJB2TAHHXs/exec";
 
@@ -203,6 +202,12 @@
       const res = await callApi({ action: 'verify', name, empId, email });
       if(res && res.success) {
         globalData.name = name; globalData.empId = empId; globalData.teamName = res.teamName; globalData.email = email;
+        
+        // [신규] DB에서 불러온 목표가 있으면 적용
+        if(res.goals && Object.keys(res.goals).length > 0) {
+           globalData.goals = res.goals;
+        }
+
         document.getElementById('affiliationText').innerText = `소속: ${res.teamName}`;
         document.getElementById('affiliationInfo').classList.remove('hidden-view');
         document.getElementById('btnStart').disabled = false;
@@ -211,7 +216,19 @@
       document.getElementById('btnVerify').innerText = "소속 정보 확인";
     }
 
-    function startApp() { localStorage.setItem('partnersAppUser', JSON.stringify(globalData)); setupUserSettings(); showApp(); initActivityScreen(); }
+    function startApp() { 
+      localStorage.setItem('partnersAppUser', JSON.stringify(globalData)); 
+      setupUserSettings(); 
+      showApp(); 
+      
+      // [신규] 시작하기 누를 때 캘린더 공유 필수 안내창
+      if (!globalData.isManualMode) {
+        alert("[안내] 원활한 활동 관리를 위해\n[설정] 탭으로 이동하여 '활동관리앱 계정에 캘린더 공유하기' 버튼을 눌러 계정 공유(필수)를 진행해 주시기 바랍니다.");
+      }
+
+      initActivityScreen(); 
+    }
+
     function logout() { localStorage.removeItem('partnersAppUser'); location.reload(); }
 
     function setupUserSettings() {
@@ -232,17 +249,24 @@
       document.getElementById('goal_보험료').value = globalData.goals['보험료'] || '';
     }
 
-    function editEmail() {
+    // [신규] 이메일 수정 시 DB 실시간 업데이트 로직 추가
+    async function editEmail() {
       const newEmail = prompt("변경할 구글 이메일을 입력해주세요.", globalData.email);
       if (newEmail !== null && newEmail.trim() !== "") {
-        globalData.email = newEmail.trim();
-        document.getElementById('settingEmail').innerText = globalData.email;
-        localStorage.setItem('partnersAppUser', JSON.stringify(globalData));
-        alert("이메일이 수정되었습니다. '활동 기록' 탭에서 새로고침을 눌러 연동을 확인하세요.");
+        const tempEmail = newEmail.trim();
+        const res = await callApi({ action: 'updateEmail', empId: globalData.empId, email: tempEmail });
+        
+        if (res && res.success) {
+          globalData.email = tempEmail;
+          document.getElementById('settingEmail').innerText = globalData.email;
+          localStorage.setItem('partnersAppUser', JSON.stringify(globalData));
+          alert("이메일이 수정되었습니다. '활동 기록' 탭에서 새로고침을 눌러 연동을 확인하세요.");
+        } else {
+          alert("서버 오류로 이메일을 수정하지 못했습니다.");
+        }
       }
     }
 
-    // 변경사항: 버튼 명칭 및 알림창 프로세스 설명 수정 반영
     function shareCalendar() {
       const targetEmail = 'lp.yspark@gmail.com';
       navigator.clipboard.writeText(targetEmail).then(() => {
@@ -255,12 +279,29 @@
     }
 
     function calcGoalSum() { let sum = 0; stages.forEach(s => sum += parseInt(document.getElementById(`goal_${s}`).value) || 0); document.getElementById('goal_활동계').value = sum; }
-    function saveUserGoals() {
-      stages.forEach(s => globalData.goals[s] = document.getElementById(`goal_${s}`).value);
-      globalData.goals['활동계'] = document.getElementById('goal_활동계').value;
-      globalData.goals['보험료'] = document.getElementById('goal_보험료').value;
+    
+    // [신규] 목표 저장 시 DB에 함께 저장하는 로직 추가
+    async function saveUserGoals() {
+      const newGoals = {};
+      stages.forEach(s => newGoals[s] = document.getElementById(`goal_${s}`).value);
+      newGoals['활동계'] = document.getElementById('goal_활동계').value;
+      newGoals['보험료'] = document.getElementById('goal_보험료').value;
+      
+      globalData.goals = newGoals;
       localStorage.setItem('partnersAppUser', JSON.stringify(globalData));
-      alert("목표가 저장되었습니다."); renderHomeDashboard();
+      
+      // DB 저장 호출
+      const res = await callApi({
+        action: 'saveGoals',
+        empId: globalData.empId, name: globalData.name, teamName: globalData.teamName,
+        goals: newGoals
+      });
+
+      if(res && res.success) {
+        alert("목표가 저장되었습니다."); renderHomeDashboard();
+      } else {
+        alert("목표를 DB에 저장하는 중 오류가 발생했습니다.");
+      }
     }
 
     function calculateCustomWeek() {
