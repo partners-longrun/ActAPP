@@ -64,8 +64,8 @@
     <!-- 메인 컨텐츠 영역 -->
     <div class="flex-1 overflow-y-auto p-4 pb-24 relative" id="mainContentArea">
       
-      <!-- [탭 0] 홈 대시보드 -->
-      <div id="tab-home" class="hidden-view fade-in space-y-6">
+      <!-- [탭 0] 홈 대시보드 (여백 p-2 적용) -->
+      <div id="tab-home" class="hidden-view fade-in p-2 space-y-6">
         <section>
           <div class="flex items-center justify-between mb-4">
             <h3 class="font-bold text-[16px] text-slate-800 border-l-4 border-[#ea580c] pl-2">이번 주 활동 진도 (목표 대비)</h3>
@@ -85,12 +85,12 @@
         </section>
       </div>
 
-      <!-- [탭 1] 활동 기록 -->
-      <div id="tab-activity" class="hidden-view fade-in"><div id="cardsContainer"></div></div>
+      <!-- [탭 1] 활동 기록 (여백 p-2 적용) -->
+      <div id="tab-activity" class="hidden-view fade-in p-2"><div id="cardsContainer"></div></div>
       
-      <!-- [탭 2] 통계 -->
-      <div id="tab-stats" class="hidden-view fade-in">
-        <div class="flex justify-between items-start px-1" style="margin-top: 4px;">
+      <!-- [탭 2] 통계 (여백 p-2 적용) -->
+      <div id="tab-stats" class="hidden-view fade-in p-2">
+        <div class="flex justify-between items-start" style="margin-top: 4px;">
           <p class="text-[11px] text-slate-500 leading-relaxed flex-1">누적 활동 결과에 따른 통계입니다.<br>활동관리에 참고하시기 바랍니다.</p>
           <select id="statsPeriod" onchange="loadStatsData()" class="w-24 ml-2 text-[11px] bg-white border border-slate-200 rounded-lg px-1 py-1.5 outline-none font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500 text-center">
             <option value="50">직전 50주</option>
@@ -100,21 +100,22 @@
           </select>
         </div>
         <div style="height: 36px;"></div>
-        <h3 class="font-bold text-[15px] text-slate-800 px-1 border-l-4 border-[#ea580c] pl-2">활동 예정 대비 결과 확률</h3>
-        <div id="statsGrid" class="mt-3 px-1"></div>
+        <h3 class="font-bold text-[15px] text-slate-800 border-l-4 border-[#ea580c] pl-2">활동 예정 대비 결과 확률</h3>
+        <div id="statsGrid" class="mt-3"></div>
 
         <div style="height: 48px;"></div>
-        <h3 class="font-bold text-[15px] text-slate-800 px-1 border-l-4 border-blue-600 pl-2">나의 활동 간 확률</h3>
-        <div id="convGrid" class="grid grid-cols-2 gap-3 mt-3 px-1"></div>
+        <h3 class="font-bold text-[15px] text-slate-800 border-l-4 border-blue-600 pl-2">나의 활동 간 확률</h3>
+        <div id="convGrid" class="grid grid-cols-2 gap-3 mt-3"></div>
       </div>
 
-      <!-- [탭 3] 설정 -->
+      <!-- [탭 3] 설정 (기존부터 p-2 존재) -->
       <div id="tab-settings" class="hidden-view fade-in p-2 space-y-4">
         <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-center relative">
            <p class="text-xs font-bold text-slate-500 mb-1">인증된 파트너 정보</p>
            <p class="text-xl font-bold text-slate-900 mt-2" id="settingName">-</p>
            <p class="text-sm font-bold text-[#ea580c] mt-1 mb-4" id="settingTeam">-</p>
            
+           <!-- 구글 계정 및 캘린더 공유 섹션 -->
            <div id="settingEmailBlock" class="bg-slate-50 rounded-xl p-3 border border-slate-100 mb-4 text-left">
              <p class="text-[10px] font-bold text-slate-400 mb-1">연동된 구글 계정</p>
              <div class="flex items-center justify-between mb-2">
@@ -153,9 +154,6 @@
 
   <script>
     lucide.createIcons();
-    // ==========================================
-    // [필독] 백엔드 URL 입력 (기존 배포 URL과 동일하게 유지)
-    // ==========================================
     const API_URL = "https://script.google.com/macros/s/AKfycbzMULbAaJw6HUBnKlALwgfV08uv3D4Su6JPbMnLPQ0F3sXb_CjJcTl9GBlJB2TAHHXs/exec";
 
     let globalData = { isManualMode: false, goals: {}, email: "" };
@@ -203,7 +201,6 @@
       if(res && res.success) {
         globalData.name = name; globalData.empId = empId; globalData.teamName = res.teamName; globalData.email = email;
         
-        // [신규] DB에서 불러온 목표가 있으면 적용
         if(res.goals && Object.keys(res.goals).length > 0) {
            globalData.goals = res.goals;
         }
@@ -221,7 +218,6 @@
       setupUserSettings(); 
       showApp(); 
       
-      // [신규] 시작하기 누를 때 캘린더 공유 필수 안내창
       if (!globalData.isManualMode) {
         alert("[안내] 원활한 활동 관리를 위해\n[설정] 탭으로 이동하여 '활동관리앱 계정에 캘린더 공유하기' 버튼을 눌러 계정 공유(필수)를 진행해 주시기 바랍니다.");
       }
@@ -249,7 +245,6 @@
       document.getElementById('goal_보험료').value = globalData.goals['보험료'] || '';
     }
 
-    // [신규] 이메일 수정 시 DB 실시간 업데이트 로직 추가
     async function editEmail() {
       const newEmail = prompt("변경할 구글 이메일을 입력해주세요.", globalData.email);
       if (newEmail !== null && newEmail.trim() !== "") {
@@ -280,7 +275,6 @@
 
     function calcGoalSum() { let sum = 0; stages.forEach(s => sum += parseInt(document.getElementById(`goal_${s}`).value) || 0); document.getElementById('goal_활동계').value = sum; }
     
-    // [신규] 목표 저장 시 DB에 함께 저장하는 로직 추가
     async function saveUserGoals() {
       const newGoals = {};
       stages.forEach(s => newGoals[s] = document.getElementById(`goal_${s}`).value);
@@ -290,7 +284,6 @@
       globalData.goals = newGoals;
       localStorage.setItem('partnersAppUser', JSON.stringify(globalData));
       
-      // DB 저장 호출
       const res = await callApi({
         action: 'saveGoals',
         empId: globalData.empId, name: globalData.name, teamName: globalData.teamName,
@@ -419,15 +412,36 @@
     function renderHomeDashboard() {
       if (!lastFetchedData) return;
       const actual = lastFetchedData.currActual; const goals = globalData.goals || {};
+      
+      // [수정점] 결과를 진하게, 목표를 연하게 표시
       let html = [...stages, '활동계', '보험료'].map(s => {
         const gV = parseInt(String(goals[s]||'0').replace(/[^0-9]/g, '')) || 0; const aV = parseInt(String(actual[s]||'0').replace(/[^0-9]/g, '')) || 0;
         const ratio = gV > 0 ? Math.min(Math.round((aV/gV)*100), 100) : (aV>0?100:0);
         let color = 'bg-red-500'; if(ratio>=85) color='bg-emerald-500'; else if(ratio>=70) color='bg-amber-500';
         let dispA = s==='보험료' ? aV.toLocaleString()+'원' : aV.toLocaleString(); let dispG = s==='보험료' ? gV.toLocaleString()+'원' : gV.toLocaleString();
-        return `<div class="space-y-1.5"><div class="flex justify-between text-[13px] font-bold text-slate-700"><span>${s}</span><span class="text-slate-400 font-normal">${dispA} / <span class="font-bold text-slate-600">${dispG}</span></span></div><div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden"><div class="${color} h-full transition-all duration-1000" style="width: ${ratio}%"></div></div></div>`;
+        
+        return `<div class="space-y-1.5">
+          <div class="flex justify-between text-[13px] font-bold text-slate-700">
+            <span>${s}</span>
+            <span class="font-bold text-slate-700">${dispA} <span class="text-slate-400 font-normal">/ ${dispG}</span></span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden"><div class="${color} h-full transition-all duration-1000" style="width: ${ratio}%"></div></div>
+        </div>`;
       }).join('');
       document.getElementById('home-progress-container').innerHTML = html;
-      document.getElementById('home-next-status').innerHTML = ['AP','P','C','N'].map(s => `<div class="bg-white border border-slate-100 rounded-xl p-3 shadow-sm flex flex-col items-center"><span class="text-[10px] font-bold text-slate-400 mb-1">${s}</span><span class="text-[18px] font-black text-blue-600">${lastFetchedData.nextPlan[s]||0}</span></div>`).join('');
+      
+      // [수정점] 다음주 예정 현황에도 목표치 표시 추가
+      document.getElementById('home-next-status').innerHTML = ['AP','P','C','N'].map(s => {
+        const pV = parseInt(lastFetchedData.nextPlan[s]) || 0;
+        const gV = parseInt(String(goals[s]||'0').replace(/[^0-9]/g, '')) || 0;
+        return `<div class="bg-white border border-slate-100 rounded-xl p-3 shadow-sm flex flex-col items-center justify-center">
+          <span class="text-[10px] font-bold text-slate-400 mb-1">${s}</span>
+          <div class="flex items-baseline space-x-1">
+            <span class="text-[18px] font-black text-blue-600">${pV}</span>
+            <span class="text-[11px] font-medium text-slate-400">/ ${gV}</span>
+          </div>
+        </div>`;
+      }).join('');
     }
 
     async function loadStatsData() {
