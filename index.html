@@ -36,7 +36,7 @@
       </div>
     </div>
 
-    <!-- 기본 정보 입력 화면 (이메일 추가) -->
+    <!-- 기본 정보 입력 화면 -->
     <div id="view-setup" class="hidden-view flex flex-col h-full p-6 fade-in bg-white">
       <h2 class="text-2xl font-bold text-gray-900 mb-8 mt-4">기본 정보 입력</h2>
       <div class="space-y-5 flex-1">
@@ -66,10 +66,23 @@
       
       <!-- [탭 0] 홈 대시보드 -->
       <div id="tab-home" class="hidden-view fade-in space-y-6">
-        <h3 class="font-bold text-[16px] text-slate-800 border-l-4 border-[#ea580c] pl-2">이번 주 활동 진도</h3>
-        <div id="home-progress-container" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-5"></div>
-        <h3 class="font-bold text-[16px] text-slate-800 border-l-4 border-blue-600 pl-2 mt-6">다음 주 활동 예정 현황</h3>
-        <div id="home-next-status" class="grid grid-cols-2 gap-3 pb-4"></div>
+        <section>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-[16px] text-slate-800 border-l-4 border-[#ea580c] pl-2">이번 주 활동 진도 (목표 대비)</h3>
+            <p class="text-[10px] text-slate-400">설정된 목표 기준</p>
+          </div>
+          <div id="home-progress-container" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-5">
+            <p class="text-center text-slate-400 py-8 text-xs">데이터 로딩 중...</p>
+          </div>
+        </section>
+
+        <section>
+          <div class="flex items-center justify-between mb-4 mt-6">
+            <h3 class="font-bold text-[16px] text-slate-800 border-l-4 border-blue-600 pl-2">다음 주 활동 예정 현황</h3>
+            <p class="text-[10px] text-slate-400" id="homeNextWeekLabel">0주차</p>
+          </div>
+          <div id="home-next-status" class="grid grid-cols-2 gap-3 pb-4"></div>
+        </section>
       </div>
 
       <!-- [탭 1] 활동 기록 -->
@@ -77,11 +90,25 @@
       
       <!-- [탭 2] 통계 -->
       <div id="tab-stats" class="hidden-view fade-in">
-        <div class="flex justify-between items-start px-1"><p class="text-[11px] text-slate-500 leading-relaxed">누적 활동 결과에 따른 통계입니다.<br>활동관리에 참고하시기 바랍니다.</p><select id="statsPeriod" onchange="loadStatsData()" class="w-24 text-[11px] font-bold bg-white border border-slate-200 rounded-lg p-1 text-center"><option value="50">직전 50주</option><option value="25">직전 25주</option><option value="12">직전 12주</option><option value="4">직전 4주</option></select></div>
-        <div id="statsGrid" class="mt-8 space-y-3 px-1"></div><div id="convGrid" class="grid grid-cols-2 gap-3 mt-10 px-1"></div>
+        <div class="flex justify-between items-start px-1" style="margin-top: 4px;">
+          <p class="text-[11px] text-slate-500 leading-relaxed flex-1">누적 활동 결과에 따른 통계입니다.<br>활동관리에 참고하시기 바랍니다.</p>
+          <select id="statsPeriod" onchange="loadStatsData()" class="w-24 ml-2 text-[11px] bg-white border border-slate-200 rounded-lg px-1 py-1.5 outline-none font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500 text-center">
+            <option value="50">직전 50주</option>
+            <option value="25">직전 25주</option>
+            <option value="12">직전 12주</option>
+            <option value="4">직전 4주</option>
+          </select>
+        </div>
+        <div style="height: 36px;"></div>
+        <h3 class="font-bold text-[15px] text-slate-800 px-1 border-l-4 border-[#ea580c] pl-2">활동 예정 대비 결과 확률</h3>
+        <div id="statsGrid" class="mt-3 px-1"></div>
+
+        <div style="height: 48px;"></div>
+        <h3 class="font-bold text-[15px] text-slate-800 px-1 border-l-4 border-blue-600 pl-2">나의 활동 간 확률</h3>
+        <div id="convGrid" class="grid grid-cols-2 gap-3 mt-3 px-1"></div>
       </div>
 
-      <!-- [탭 3] 설정 (캘린더 공유 버튼 추가) -->
+      <!-- [탭 3] 설정 -->
       <div id="tab-settings" class="hidden-view fade-in p-2 space-y-4">
         <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-center relative">
            <p class="text-xs font-bold text-slate-500 mb-1">인증된 파트너 정보</p>
@@ -96,7 +123,7 @@
                <button onclick="editEmail()" class="text-[10px] text-blue-500 font-bold px-2 py-1 rounded bg-blue-50">수정</button>
              </div>
              <button onclick="shareCalendar()" class="w-full bg-[#1e293b] text-white font-bold py-2.5 rounded-lg active:scale-95 transition text-xs flex items-center justify-center space-x-2 mt-2">
-               <i data-lucide="share-2" class="w-3.5 h-3.5"></i><span>본부장님께 캘린더 공유하기</span>
+               <i data-lucide="share-2" class="w-3.5 h-3.5"></i><span>활동관리앱 계정에 캘린더 공유하기</span>
              </button>
            </div>
 
@@ -158,7 +185,6 @@
 
     function selectLoginMode(isManual) { 
       globalData.isManualMode = isManual; 
-      // 수동 입력 모드면 이메일 입력창 숨기기
       if (isManual) document.getElementById('emailInputWrap').classList.add('hidden-view');
       else document.getElementById('emailInputWrap').classList.remove('hidden-view');
       switchView('view-setup'); 
@@ -193,7 +219,6 @@
       document.getElementById('settingName').innerText = `${globalData.name} (${globalData.empId})`;
       document.getElementById('settingTeam').innerText = globalData.teamName || '-';
       
-      // 이메일 정보 세팅 및 수동모드 시 캘린더 공유 버튼 숨김
       if (globalData.isManualMode) {
         document.getElementById('settingEmailBlock').style.display = 'none';
       } else {
@@ -207,7 +232,6 @@
       document.getElementById('goal_보험료').value = globalData.goals['보험료'] || '';
     }
 
-    // [신규] 설정 탭에서 이메일 수정
     function editEmail() {
       const newEmail = prompt("변경할 구글 이메일을 입력해주세요.", globalData.email);
       if (newEmail !== null && newEmail.trim() !== "") {
@@ -218,11 +242,11 @@
       }
     }
 
-    // [신규] 캘린더 공유 프로세스 (클립보드 복사 후 설정창 띄우기)
+    // 변경사항: 버튼 명칭 및 알림창 프로세스 설명 수정 반영
     function shareCalendar() {
       const targetEmail = 'lp.yspark@gmail.com';
       navigator.clipboard.writeText(targetEmail).then(() => {
-        alert(`본부장님 계정(${targetEmail})이 클립보드에 복사되었습니다.\n\n[확인]을 누르시면 구글 캘린더 설정 화면으로 이동합니다.\n\n1. 본인의 캘린더 이름을 선택하고\n2. '특정 사용자와 공유' 항목에서\n3. 복사된 주소를 붙여넣고 '모든 일정 세부정보 보기' 권한을 주세요.`);
+        alert(`활동관리앱 계정(${targetEmail})이 클립보드에 복사되었습니다.\n\n[확인]을 누르시면 구글 캘린더 설정 화면으로 이동합니다.\n\n1. 본인의 공유할 캘린더 이름을 선택\n2. '공유 대상'에서 '사용자 및 그룹 추가' 버튼 클릭\n3. '특정 사용자와 공유' 창에서,\n4. 복사된 주소를 붙여넣고 '모든 일정 세부정보 보기' 권한을 선택후 '보내기' 버튼 클릭하면\n5. 활동관리앱 계정으로 공유알림 메일이 발송됩니다.`);
         window.open('https://calendar.google.com/calendar/r/settings', '_blank');
       }).catch(err => {
         alert("클립보드 복사에 실패했습니다. 'lp.yspark@gmail.com'을 직접 입력해주세요.");
@@ -268,6 +292,7 @@
       weekContext = calculateCustomWeek();
       document.getElementById('headerWeek').innerText = `${weekContext.currWeek}주차`;
       document.getElementById('headerDate').innerText = weekContext.todayStr;
+      document.getElementById('homeNextWeekLabel').innerText = `${weekContext.nextWeek}주차 (${weekContext.nextMonday})`;
       document.getElementById('cardsContainer').innerHTML = buildCardHtml('currPlan', weekContext.currWeek, weekContext.currMonday, '예정', false, 'text-blue-600') + buildCardHtml('currActual', weekContext.currWeek, weekContext.currMonday, '결과', true, 'text-[#ea580c]') + buildCardHtml('nextPlan', weekContext.nextWeek, weekContext.nextMonday, '예정', true, 'text-blue-600');
       lucide.createIcons(); await loadActivityData();
     }
@@ -276,13 +301,10 @@
 
     async function loadActivityData() {
       document.getElementById('headerReloadIcon').classList.add('animate-spin');
-      
-      // email 정보 추가 전달
       const res = await callApi({ 
         action: 'getData', empId: globalData.empId, name: globalData.name, teamName: globalData.teamName, email: globalData.email,
         currYear: weekContext.currYear, currWeek: weekContext.currWeek, nextYear: weekContext.nextYear, nextWeek: weekContext.nextWeek, isManualMode: globalData.isManualMode 
       });
-      
       document.getElementById('headerReloadIcon').classList.remove('animate-spin');
       
       if(res) {
@@ -290,9 +312,8 @@
         fillCardData('currPlan', res.currPlan); fillCardData('currActual', res.currActual); fillCardData('nextPlan', res.nextPlan);
         updateButtonStates(); renderHomeDashboard(); prefetchStatsData();
 
-        // 캘린더 공유 에러 핸들링
         if (res.calError) {
-          alert("캘린더 데이터를 불러오지 못했습니다.\n[설정] 탭에서 '본부장님께 캘린더 공유하기'를 완료해 주세요.");
+          alert("캘린더 데이터를 불러오지 못했습니다.\n[설정] 탭에서 '활동관리앱 계정에 캘린더 공유하기'를 완료해 주세요.");
           document.getElementById('syncStatusMsg').innerHTML = `<div class="w-2 h-2 rounded-full bg-red-500 mr-1.5"></div> 공유 대기중`;
         } else {
           document.getElementById('syncStatusMsg').innerHTML = `<div class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></div> 바인딩 완료`;
@@ -333,7 +354,7 @@
         if(empty) { alert("결과 또는 예정 항목에 빈 항목이 있습니다."); return; }
         if(!confirm("저장하시겠습니까?")) return;
         btn.classList.add('btn-loading'); btn.innerText = "저장 중...";
-        const payload = { empId: globalData.empId, name: globalData.name, teamName: globalData.teamName, currYear: weekContext.currYear, currWeek: weekContext.currWeek, nextYear: weekContext.nextYear, nextWeek: weekContext.nextWeek, currActualValues: getPayload('currActual'), nextPlanValues: getPayload('nextPlan'), isManualMode: globalData.isManualMode };
+        const payload = { empId: globalData.empId, name: globalData.name, teamName: globalData.teamName, currYear: weekContext.currYear, currWeek: weekContext.currWeek, nextYear: weekContext.nextYear, nextWeek: weekContext.nextWeek, currActualValues: getPayload(('currActual')), nextPlanValues: getPayload(('nextPlan')), isManualMode: globalData.isManualMode };
         const res = await callApi({ action: 'submit', type: type, payload: payload });
         if(res) { alert(res.message); statsCache = {}; await loadActivityData(); }
       }
