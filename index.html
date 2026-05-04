@@ -64,7 +64,7 @@
     <!-- 메인 컨텐츠 영역 -->
     <div class="flex-1 overflow-y-auto p-4 pb-24 relative" id="mainContentArea">
       
-      <!-- [탭 0] 홈 대시보드 (여백 p-2 적용) -->
+      <!-- [탭 0] 홈 대시보드 -->
       <div id="tab-home" class="hidden-view fade-in p-2 space-y-6">
         <section>
           <div class="flex items-center justify-between mb-4">
@@ -85,10 +85,10 @@
         </section>
       </div>
 
-      <!-- [탭 1] 활동 기록 (여백 p-2 적용) -->
+      <!-- [탭 1] 활동 기록 -->
       <div id="tab-activity" class="hidden-view fade-in p-2"><div id="cardsContainer"></div></div>
       
-      <!-- [탭 2] 통계 (여백 p-2 적용) -->
+      <!-- [탭 2] 통계 -->
       <div id="tab-stats" class="hidden-view fade-in p-2">
         <div class="flex justify-between items-start" style="margin-top: 4px;">
           <p class="text-[11px] text-slate-500 leading-relaxed flex-1">누적 활동 결과에 따른 통계입니다.<br>활동관리에 참고하시기 바랍니다.</p>
@@ -108,14 +108,13 @@
         <div id="convGrid" class="grid grid-cols-2 gap-3 mt-3"></div>
       </div>
 
-      <!-- [탭 3] 설정 (기존부터 p-2 존재) -->
+      <!-- [탭 3] 설정 -->
       <div id="tab-settings" class="hidden-view fade-in p-2 space-y-4">
         <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-center relative">
            <p class="text-xs font-bold text-slate-500 mb-1">인증된 파트너 정보</p>
            <p class="text-xl font-bold text-slate-900 mt-2" id="settingName">-</p>
            <p class="text-sm font-bold text-[#ea580c] mt-1 mb-4" id="settingTeam">-</p>
            
-           <!-- 구글 계정 및 캘린더 공유 섹션 -->
            <div id="settingEmailBlock" class="bg-slate-50 rounded-xl p-3 border border-slate-100 mb-4 text-left">
              <p class="text-[10px] font-bold text-slate-400 mb-1">연동된 구글 계정</p>
              <div class="flex items-center justify-between mb-2">
@@ -154,6 +153,9 @@
 
   <script>
     lucide.createIcons();
+    // ==========================================
+    // [필독] 백엔드 URL 입력
+    // ==========================================
     const API_URL = "https://script.google.com/macros/s/AKfycbzMULbAaJw6HUBnKlALwgfV08uv3D4Su6JPbMnLPQ0F3sXb_CjJcTl9GBlJB2TAHHXs/exec";
 
     let globalData = { isManualMode: false, goals: {}, email: "" };
@@ -297,15 +299,37 @@
       }
     }
 
+    // 변경사항: 실제 주차와 마감용 주차 계산을 분리
     function calculateCustomWeek() {
       const today = new Date(); const days = ['일', '월', '화', '수', '목', '금', '토'];
-      let base = new Date(today); if (today.getDay() === 1) base.setDate(base.getDate() - 1);
+      
+      // 1. 헤더 표시용 실제 주차 (월요일 예외 없음)
+      let realBase = new Date(today);
+      realBase.setHours(0,0,0,0); 
+      realBase.setDate(realBase.getDate() + 3 - (realBase.getDay() + 6) % 7);
+      const realWeek1 = new Date(realBase.getFullYear(), 0, 4);
+      const realCurrWeek = Math.round(((realBase.getTime() - realWeek1.getTime()) / 86400000 - 3 + (realWeek1.getDay() + 6) % 7) / 7) + 1;
+
+      // 2. 활동 카드용 마감용 주차 (월요일은 일요일처럼 취급하여 지난주로 인식)
+      let base = new Date(today); 
+      if (today.getDay() === 1) base.setDate(base.getDate() - 1);
       base.setHours(0,0,0,0); base.setDate(base.getDate() + 3 - (base.getDay() + 6) % 7);
       const week1 = new Date(base.getFullYear(), 0, 4);
       const currWeek = Math.round(((base.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7) + 1;
+      
       const mon = new Date(base); mon.setDate(mon.getDate() - (mon.getDay() || 7) + 1);
       const nextMon = new Date(mon); nextMon.setDate(nextMon.getDate() + 7);
-      return { todayStr: today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0')+'('+days[today.getDay()]+')', currYear: base.getFullYear(), currWeek, currMonday: mon.toISOString().split('T')[0], nextYear: nextMon.getFullYear(), nextWeek: (currWeek>=52?1:currWeek+1), nextMonday: nextMon.toISOString().split('T')[0] };
+      
+      return { 
+        todayStr: today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0')+'('+days[today.getDay()]+')', 
+        realCurrWeek: realCurrWeek, // 추가된 실제 주차 속성
+        currYear: base.getFullYear(), 
+        currWeek: currWeek, 
+        currMonday: mon.toISOString().split('T')[0], 
+        nextYear: nextMon.getFullYear(), 
+        nextWeek: (currWeek>=52?1:currWeek+1), 
+        nextMonday: nextMon.toISOString().split('T')[0] 
+      };
     }
 
     function formatCurrency(el) { let v = el.value.replace(/[^0-9]/g, ''); el.value = v ? parseInt(v, 10).toLocaleString() : ''; }
@@ -324,8 +348,11 @@
 
     async function initActivityScreen() {
       weekContext = calculateCustomWeek();
-      document.getElementById('headerWeek').innerText = `${weekContext.currWeek}주차`;
+      // 변경사항: 헤더에는 실제 주차인 realCurrWeek 표시
+      document.getElementById('headerWeek').innerText = `${weekContext.realCurrWeek}주차`;
       document.getElementById('headerDate').innerText = weekContext.todayStr;
+      
+      // 변경사항: 카드는 기존과 동일하게 마감용 주차인 currWeek 표시
       document.getElementById('homeNextWeekLabel').innerText = `${weekContext.nextWeek}주차 (${weekContext.nextMonday})`;
       document.getElementById('cardsContainer').innerHTML = buildCardHtml('currPlan', weekContext.currWeek, weekContext.currMonday, '예정', false, 'text-blue-600') + buildCardHtml('currActual', weekContext.currWeek, weekContext.currMonday, '결과', true, 'text-[#ea580c]') + buildCardHtml('nextPlan', weekContext.nextWeek, weekContext.nextMonday, '예정', true, 'text-blue-600');
       lucide.createIcons(); await loadActivityData();
@@ -413,7 +440,6 @@
       if (!lastFetchedData) return;
       const actual = lastFetchedData.currActual; const goals = globalData.goals || {};
       
-      // [수정점] 결과를 진하게, 목표를 연하게 표시
       let html = [...stages, '활동계', '보험료'].map(s => {
         const gV = parseInt(String(goals[s]||'0').replace(/[^0-9]/g, '')) || 0; const aV = parseInt(String(actual[s]||'0').replace(/[^0-9]/g, '')) || 0;
         const ratio = gV > 0 ? Math.min(Math.round((aV/gV)*100), 100) : (aV>0?100:0);
@@ -430,7 +456,6 @@
       }).join('');
       document.getElementById('home-progress-container').innerHTML = html;
       
-      // [수정점] 다음주 예정 현황에도 목표치 표시 추가
       document.getElementById('home-next-status').innerHTML = ['AP','P','C','N'].map(s => {
         const pV = parseInt(lastFetchedData.nextPlan[s]) || 0;
         const gV = parseInt(String(goals[s]||'0').replace(/[^0-9]/g, '')) || 0;
