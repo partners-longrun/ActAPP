@@ -64,7 +64,7 @@
     <!-- 메인 컨텐츠 영역 -->
     <div class="flex-1 overflow-y-auto p-4 pb-24 relative" id="mainContentArea">
       
-      <!-- [탭 0] 홈 대시보드 -->
+      <!-- [탭 0] 홈 대시보드 (여백 p-2 유지) -->
       <div id="tab-home" class="hidden-view fade-in p-2 space-y-6">
         <section>
           <div class="flex items-center justify-between mb-4">
@@ -85,24 +85,33 @@
         </section>
       </div>
 
-      <!-- [탭 1] 활동 기록 -->
-      <div id="tab-activity" class="hidden-view fade-in p-2"><div id="cardsContainer"></div></div>
+      <!-- [탭 1] 활동 기록 (주차 이동 및 통합 버튼 추가) -->
+      <div id="tab-activity" class="hidden-view fade-in p-2">
+        <div class="flex justify-between items-center mb-4 bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+          <button onclick="changeWeek(-1)" class="p-2 bg-slate-50 rounded-lg active:scale-95"><i data-lucide="chevron-left" class="w-5 h-5 text-slate-600"></i></button>
+          <div class="text-center">
+            <p class="text-sm font-bold text-slate-800" id="activityWeekLabel">0주차 기록</p>
+            <p class="text-[10px] text-slate-500 font-bold mt-0.5" id="activityWeekDate">YYYY-MM-DD</p>
+          </div>
+          <button onclick="changeWeek(1)" id="btnNextWeek" class="p-2 bg-slate-50 rounded-lg active:scale-95"><i data-lucide="chevron-right" class="w-5 h-5 text-slate-600"></i></button>
+        </div>
+        
+        <div id="cardsContainer"></div>
+        
+        <button id="btn-unified-save" onclick="handleUnifiedSave()" class="w-full font-bold py-4 rounded-xl transition text-sm shadow-md mt-2"></button>
+      </div>
       
       <!-- [탭 2] 통계 -->
       <div id="tab-stats" class="hidden-view fade-in p-2">
         <div class="flex justify-between items-start" style="margin-top: 4px;">
           <p class="text-[11px] text-slate-500 leading-relaxed flex-1">누적 활동 결과에 따른 통계입니다.<br>활동관리에 참고하시기 바랍니다.</p>
           <select id="statsPeriod" onchange="loadStatsData()" class="w-24 ml-2 text-[11px] bg-white border border-slate-200 rounded-lg px-1 py-1.5 outline-none font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500 text-center">
-            <option value="50">직전 50주</option>
-            <option value="25">직전 25주</option>
-            <option value="12">직전 12주</option>
-            <option value="4">직전 4주</option>
+            <option value="50">직전 50주</option><option value="25">직전 25주</option><option value="12">직전 12주</option><option value="4">직전 4주</option>
           </select>
         </div>
         <div style="height: 36px;"></div>
         <h3 class="font-bold text-[15px] text-slate-800 border-l-4 border-[#ea580c] pl-2">활동 예정 대비 결과 확률</h3>
         <div id="statsGrid" class="mt-3"></div>
-
         <div style="height: 48px;"></div>
         <h3 class="font-bold text-[15px] text-slate-800 border-l-4 border-blue-600 pl-2">나의 활동 간 확률</h3>
         <div id="convGrid" class="grid grid-cols-2 gap-3 mt-3"></div>
@@ -125,7 +134,6 @@
                <i data-lucide="share-2" class="w-3.5 h-3.5"></i><span>활동관리앱 계정에 캘린더 공유하기</span>
              </button>
            </div>
-
            <hr class="my-5 border-slate-100">
            <button onclick="logout()" class="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl active:scale-95 text-sm">로그아웃</button>
         </div>
@@ -153,13 +161,11 @@
 
   <script>
     lucide.createIcons();
-    // ==========================================
-    // [필독] 백엔드 URL 입력
-    // ==========================================
     const API_URL = "https://script.google.com/macros/s/AKfycbzMULbAaJw6HUBnKlALwgfV08uv3D4Su6JPbMnLPQ0F3sXb_CjJcTl9GBlJB2TAHHXs/exec";
 
     let globalData = { isManualMode: false, goals: {}, email: "" };
-    let weekContext = {}; let lastFetchedData = null; let isWeekSaved = false; let isWeekClosed = false; let statsCache = {};
+    let homeContext = {}; let viewContext = {}; let currentWeekOffset = 0;
+    let homeData = null; let activityData = null; let statsCache = {};
     const stages = ['TA', 'AP', 'P', 'C', 'N', '소개'];
 
     async function callApi(data) {
@@ -202,11 +208,7 @@
       const res = await callApi({ action: 'verify', name, empId, email });
       if(res && res.success) {
         globalData.name = name; globalData.empId = empId; globalData.teamName = res.teamName; globalData.email = email;
-        
-        if(res.goals && Object.keys(res.goals).length > 0) {
-           globalData.goals = res.goals;
-        }
-
+        if(res.goals && Object.keys(res.goals).length > 0) globalData.goals = res.goals;
         document.getElementById('affiliationText').innerText = `소속: ${res.teamName}`;
         document.getElementById('affiliationInfo').classList.remove('hidden-view');
         document.getElementById('btnStart').disabled = false;
@@ -219,11 +221,9 @@
       localStorage.setItem('partnersAppUser', JSON.stringify(globalData)); 
       setupUserSettings(); 
       showApp(); 
-      
       if (!globalData.isManualMode) {
         alert("[안내] 원활한 활동 관리를 위해\n[설정] 탭으로 이동하여 '활동관리앱 계정에 캘린더 공유하기' 버튼을 눌러 계정 공유(필수)를 진행해 주시기 바랍니다.");
       }
-
       initActivityScreen(); 
     }
 
@@ -234,12 +234,8 @@
       document.getElementById('settingName').innerText = `${globalData.name} (${globalData.empId})`;
       document.getElementById('settingTeam').innerText = globalData.teamName || '-';
       
-      if (globalData.isManualMode) {
-        document.getElementById('settingEmailBlock').style.display = 'none';
-      } else {
-        document.getElementById('settingEmailBlock').style.display = 'block';
-        document.getElementById('settingEmail').innerText = globalData.email || '미입력';
-      }
+      if (globalData.isManualMode) document.getElementById('settingEmailBlock').style.display = 'none';
+      else { document.getElementById('settingEmailBlock').style.display = 'block'; document.getElementById('settingEmail').innerText = globalData.email || '미입력'; }
 
       let goalHtml = stages.map(s => `<div class="text-center"><p class="text-[11px] font-bold text-slate-500 mb-1">${s}</p><input type="number" id="goal_${s}" oninput="calcGoalSum()" class="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-orange-500" value="${globalData.goals[s]||''}"></div>`).join('');
       document.getElementById('goalInputs').innerHTML = goalHtml;
@@ -250,17 +246,12 @@
     async function editEmail() {
       const newEmail = prompt("변경할 구글 이메일을 입력해주세요.", globalData.email);
       if (newEmail !== null && newEmail.trim() !== "") {
-        const tempEmail = newEmail.trim();
-        const res = await callApi({ action: 'updateEmail', empId: globalData.empId, email: tempEmail });
-        
+        const res = await callApi({ action: 'updateEmail', empId: globalData.empId, email: newEmail.trim() });
         if (res && res.success) {
-          globalData.email = tempEmail;
-          document.getElementById('settingEmail').innerText = globalData.email;
+          globalData.email = newEmail.trim(); document.getElementById('settingEmail').innerText = globalData.email;
           localStorage.setItem('partnersAppUser', JSON.stringify(globalData));
-          alert("이메일이 수정되었습니다. '활동 기록' 탭에서 새로고침을 눌러 연동을 확인하세요.");
-        } else {
-          alert("서버 오류로 이메일을 수정하지 못했습니다.");
-        }
+          alert("이메일이 수정되었습니다."); manualReload();
+        } else alert("서버 오류로 이메일을 수정하지 못했습니다.");
       }
     }
 
@@ -269,66 +260,39 @@
       navigator.clipboard.writeText(targetEmail).then(() => {
         alert(`활동관리앱 계정(${targetEmail})이 클립보드에 복사되었습니다.\n\n[확인]을 누르시면 구글 캘린더 설정 화면으로 이동합니다.\n\n1. 본인의 공유할 캘린더 이름을 선택\n2. '공유 대상'에서 '사용자 및 그룹 추가' 버튼 클릭\n3. '특정 사용자와 공유' 창에서,\n4. 복사된 주소를 붙여넣고 '모든 일정 세부정보 보기' 권한을 선택후 '보내기' 버튼 클릭하면\n5. 활동관리앱 계정으로 공유알림 메일이 발송됩니다.`);
         window.open('https://calendar.google.com/calendar/r/settings', '_blank');
-      }).catch(err => {
-        alert("클립보드 복사에 실패했습니다. 'lp.yspark@gmail.com'을 직접 입력해주세요.");
-        window.open('https://calendar.google.com/calendar/r/settings', '_blank');
-      });
+      }).catch(err => { alert("클립보드 복사 실패."); window.open('https://calendar.google.com/calendar/r/settings', '_blank'); });
     }
 
     function calcGoalSum() { let sum = 0; stages.forEach(s => sum += parseInt(document.getElementById(`goal_${s}`).value) || 0); document.getElementById('goal_활동계').value = sum; }
     
     async function saveUserGoals() {
-      const newGoals = {};
-      stages.forEach(s => newGoals[s] = document.getElementById(`goal_${s}`).value);
-      newGoals['활동계'] = document.getElementById('goal_활동계').value;
-      newGoals['보험료'] = document.getElementById('goal_보험료').value;
-      
-      globalData.goals = newGoals;
-      localStorage.setItem('partnersAppUser', JSON.stringify(globalData));
-      
-      const res = await callApi({
-        action: 'saveGoals',
-        empId: globalData.empId, name: globalData.name, teamName: globalData.teamName,
-        goals: newGoals
-      });
-
-      if(res && res.success) {
-        alert("목표가 저장되었습니다."); renderHomeDashboard();
-      } else {
-        alert("목표를 DB에 저장하는 중 오류가 발생했습니다.");
-      }
+      const newGoals = {}; stages.forEach(s => newGoals[s] = document.getElementById(`goal_${s}`).value);
+      newGoals['활동계'] = document.getElementById('goal_활동계').value; newGoals['보험료'] = document.getElementById('goal_보험료').value;
+      globalData.goals = newGoals; localStorage.setItem('partnersAppUser', JSON.stringify(globalData));
+      const res = await callApi({ action: 'saveGoals', empId: globalData.empId, name: globalData.name, teamName: globalData.teamName, goals: newGoals });
+      if(res && res.success) { alert("목표가 저장되었습니다."); renderHomeDashboard(); } else alert("오류가 발생했습니다.");
     }
 
-    // 변경사항: 실제 주차와 마감용 주차 계산을 분리
-    function calculateCustomWeek() {
+    // 주차 계산 함수 (원하는 주차 차이만큼 이동)
+    function calculateCustomWeek(offsetWeeks = 0) {
       const today = new Date(); const days = ['일', '월', '화', '수', '목', '금', '토'];
+      let targetDate = new Date(today); targetDate.setDate(targetDate.getDate() + (offsetWeeks * 7));
       
-      // 1. 헤더 표시용 실제 주차 (월요일 예외 없음)
-      let realBase = new Date(today);
-      realBase.setHours(0,0,0,0); 
-      realBase.setDate(realBase.getDate() + 3 - (realBase.getDay() + 6) % 7);
+      let realBase = new Date(targetDate); realBase.setHours(0,0,0,0); realBase.setDate(realBase.getDate() + 3 - (realBase.getDay() + 6) % 7);
       const realWeek1 = new Date(realBase.getFullYear(), 0, 4);
       const realCurrWeek = Math.round(((realBase.getTime() - realWeek1.getTime()) / 86400000 - 3 + (realWeek1.getDay() + 6) % 7) / 7) + 1;
 
-      // 2. 활동 카드용 마감용 주차 (월요일은 일요일처럼 취급하여 지난주로 인식)
-      let base = new Date(today); 
-      if (today.getDay() === 1) base.setDate(base.getDate() - 1);
+      let base = new Date(targetDate); if (targetDate.getDay() === 1) base.setDate(base.getDate() - 1);
       base.setHours(0,0,0,0); base.setDate(base.getDate() + 3 - (base.getDay() + 6) % 7);
       const week1 = new Date(base.getFullYear(), 0, 4);
       const currWeek = Math.round(((base.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7) + 1;
-      
       const mon = new Date(base); mon.setDate(mon.getDate() - (mon.getDay() || 7) + 1);
       const nextMon = new Date(mon); nextMon.setDate(nextMon.getDate() + 7);
       
       return { 
-        todayStr: today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0')+'('+days[today.getDay()]+')', 
-        realCurrWeek: realCurrWeek, // 추가된 실제 주차 속성
-        currYear: base.getFullYear(), 
-        currWeek: currWeek, 
-        currMonday: mon.toISOString().split('T')[0], 
-        nextYear: nextMon.getFullYear(), 
-        nextWeek: (currWeek>=52?1:currWeek+1), 
-        nextMonday: nextMon.toISOString().split('T')[0] 
+        todayStr: targetDate.getFullYear()+'-'+String(targetDate.getMonth()+1).padStart(2,'0')+'-'+String(targetDate.getDate()).padStart(2,'0')+'('+days[targetDate.getDay()]+')', 
+        realCurrWeek: realCurrWeek, currYear: base.getFullYear(), currWeek: currWeek, currMonday: mon.toISOString().split('T')[0], 
+        nextYear: nextMon.getFullYear(), nextWeek: (currWeek>=52?1:currWeek+1), nextMonday: nextMon.toISOString().split('T')[0] 
       };
     }
 
@@ -337,92 +301,96 @@
     function buildCardHtml(id, week, date, type, expanded, color) {
       let html = `<div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm mb-4 transition-all"><div class="bg-slate-50 px-4 py-3 flex justify-between items-center cursor-pointer" onclick="toggleCard('${id}')"><span class="font-bold text-slate-800">${week}주차 <span class="text-xs font-normal text-slate-500 ml-1">${date}</span></span><span class="text-sm font-bold ${color}">${type} <i data-lucide="${expanded?'chevron-up':'chevron-down'}" id="icon-${id}" class="w-4 h-4 inline"></i></span></div><div id="body-${id}" class="p-4 ${expanded?'':'hidden-view'}"><div class="grid grid-cols-3 gap-3 mb-4">`;
       stages.forEach(s => html += `<div class="text-center"><p class="text-[11px] font-bold text-slate-500 mb-1">${s}</p><input type="number" id="input_${id}_${s}" oninput="calcSum('${id}')" class="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold outline-none"></div>`);
-      html += `</div><div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-emerald-50 rounded-lg p-3 flex flex-col items-center justify-center border border-emerald-100"><p class="text-[10px] font-bold text-emerald-700 mb-1">활동계</p><span id="sum_${id}" class="text-lg font-bold text-emerald-900">0</span></div><div><p class="text-[10px] text-center font-bold text-slate-500 mb-1">보험료</p><input type="text" id="input_${id}_보험료" oninput="formatCurrency(this)" class="w-full text-center py-2.5 border border-slate-200 bg-slate-50 rounded-lg font-bold outline-none"></div></div>`;
-      if (id === 'currActual') html += `<button id="btn-save" onclick="handleWeeklyAction('save')" class="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl transition text-sm shadow-md">주초 마감하기 (저장하기)</button>`;
-      if (id === 'nextPlan') html += `<button id="btn-close" onclick="handleWeeklyAction('close')" class="w-full bg-[#ea580c] text-white font-bold py-3.5 rounded-xl transition text-sm shadow-md">주 마감하기 (저장하기)</button>`;
-      return html + `</div></div>`;
+      html += `</div><div class="grid grid-cols-2 gap-3"><div class="bg-emerald-50 rounded-lg p-3 flex flex-col items-center justify-center border border-emerald-100"><p class="text-[10px] font-bold text-emerald-700 mb-1">활동계</p><span id="sum_${id}" class="text-lg font-bold text-emerald-900">0</span></div><div><p class="text-[10px] text-center font-bold text-slate-500 mb-1">보험료</p><input type="text" id="input_${id}_보험료" oninput="formatCurrency(this)" class="w-full text-center py-2.5 border border-slate-200 bg-slate-50 rounded-lg font-bold outline-none"></div></div></div></div>`;
+      return html;
     }
 
     function toggleCard(id) { let b = document.getElementById(`body-${id}`); let ic = document.getElementById(`icon-${id}`); b.classList.toggle('hidden-view'); ic.setAttribute('data-lucide', b.classList.contains('hidden-view')?'chevron-down':'chevron-up'); lucide.createIcons(); }
     function calcSum(id) { let s = 0; stages.forEach(st => s += parseInt(document.getElementById(`input_${id}_${st}`).value) || 0); document.getElementById(`sum_${id}`).innerText = s; }
 
     async function initActivityScreen() {
-      weekContext = calculateCustomWeek();
-      // 변경사항: 헤더에는 실제 주차인 realCurrWeek 표시
-      document.getElementById('headerWeek').innerText = `${weekContext.realCurrWeek}주차`;
-      document.getElementById('headerDate').innerText = weekContext.todayStr;
-      
-      // 변경사항: 카드는 기존과 동일하게 마감용 주차인 currWeek 표시
-      document.getElementById('homeNextWeekLabel').innerText = `${weekContext.nextWeek}주차 (${weekContext.nextMonday})`;
-      document.getElementById('cardsContainer').innerHTML = buildCardHtml('currPlan', weekContext.currWeek, weekContext.currMonday, '예정', false, 'text-blue-600') + buildCardHtml('currActual', weekContext.currWeek, weekContext.currMonday, '결과', true, 'text-[#ea580c]') + buildCardHtml('nextPlan', weekContext.nextWeek, weekContext.nextMonday, '예정', true, 'text-blue-600');
-      lucide.createIcons(); await loadActivityData();
+      homeContext = calculateCustomWeek(0);
+      document.getElementById('headerWeek').innerText = `${homeContext.realCurrWeek}주차`;
+      document.getElementById('headerDate').innerText = homeContext.todayStr;
+      document.getElementById('homeNextWeekLabel').innerText = `${homeContext.nextWeek}주차 (${homeContext.nextMonday})`;
+      await loadDataForOffset(0);
     }
 
-    async function manualReload() { statsCache = {}; await loadActivityData(); }
+    function changeWeek(delta) {
+      currentWeekOffset += delta;
+      if (currentWeekOffset > 0) currentWeekOffset = 0; 
+      loadDataForOffset(currentWeekOffset);
+    }
 
-    async function loadActivityData() {
+    async function loadDataForOffset(offset) {
       document.getElementById('headerReloadIcon').classList.add('animate-spin');
+      const context = calculateCustomWeek(offset);
       const res = await callApi({ 
         action: 'getData', empId: globalData.empId, name: globalData.name, teamName: globalData.teamName, email: globalData.email,
-        currYear: weekContext.currYear, currWeek: weekContext.currWeek, nextYear: weekContext.nextYear, nextWeek: weekContext.nextWeek, isManualMode: globalData.isManualMode 
+        currYear: context.currYear, currWeek: context.currWeek, nextYear: context.nextYear, nextWeek: context.nextWeek, isManualMode: globalData.isManualMode 
       });
       document.getElementById('headerReloadIcon').classList.remove('animate-spin');
       
       if(res) {
-        lastFetchedData = res; isWeekSaved = res.isSaved; isWeekClosed = res.isClosed;
-        fillCardData('currPlan', res.currPlan); fillCardData('currActual', res.currActual); fillCardData('nextPlan', res.nextPlan);
-        updateButtonStates(); renderHomeDashboard(); prefetchStatsData();
-
-        if (res.calError) {
-          alert("캘린더 데이터를 불러오지 못했습니다.\n[설정] 탭에서 '활동관리앱 계정에 캘린더 공유하기'를 완료해 주세요.");
-          document.getElementById('syncStatusMsg').innerHTML = `<div class="w-2 h-2 rounded-full bg-red-500 mr-1.5"></div> 공유 대기중`;
-        } else {
-          document.getElementById('syncStatusMsg').innerHTML = `<div class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></div> 바인딩 완료`;
+        viewContext = context; activityData = res;
+        if (offset === 0) {
+          homeData = res; renderHomeDashboard(); prefetchStatsData();
+          if (res.calError) { alert("캘린더 데이터를 불러오지 못했습니다.\n[설정] 탭에서 '활동관리앱 계정에 캘린더 공유하기'를 완료해 주세요."); document.getElementById('syncStatusMsg').innerHTML = `<div class="w-2 h-2 rounded-full bg-red-500 mr-1.5"></div> 공유 대기중`; } 
+          else { document.getElementById('syncStatusMsg').innerHTML = `<div class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></div> 바인딩 완료`; }
         }
+        renderActivityTab(offset);
       }
+    }
+
+    function renderActivityTab(offset) {
+      document.getElementById('activityWeekLabel').innerText = `${viewContext.currWeek}주차 기록`;
+      document.getElementById('activityWeekDate').innerText = viewContext.currMonday;
+
+      const btnNext = document.getElementById('btnNextWeek');
+      if (offset >= 0) { btnNext.disabled = true; btnNext.classList.replace('text-slate-600', 'text-slate-300'); btnNext.classList.add('cursor-not-allowed'); } 
+      else { btnNext.disabled = false; btnNext.classList.replace('text-slate-300', 'text-slate-600'); btnNext.classList.remove('cursor-not-allowed'); }
+
+      document.getElementById('cardsContainer').innerHTML = buildCardHtml('currPlan', viewContext.currWeek, viewContext.currMonday, '예정', false, 'text-blue-600') + buildCardHtml('currActual', viewContext.currWeek, viewContext.currMonday, '결과', true, 'text-[#ea580c]') + buildCardHtml('nextPlan', viewContext.nextWeek, viewContext.nextMonday, '예정', true, 'text-blue-600');
+      lucide.createIcons();
+      fillCardData('currPlan', activityData.currPlan); fillCardData('currActual', activityData.currActual); fillCardData('nextPlan', activityData.nextPlan);
+      updateUnifiedButtonState(activityData.isClosed);
     }
 
     function fillCardData(id, obj) {
-      stages.forEach(s => { let input = document.getElementById(`input_${id}_${s}`); input.value = obj[s] || ''; input.disabled = isWeekClosed; });
-      let prm = document.getElementById(`input_${id}_보험료`); prm.value = obj['보험료'] || ''; prm.disabled = isWeekClosed; formatCurrency(prm); calcSum(id);
+      stages.forEach(s => { let input = document.getElementById(`input_${id}_${s}`); input.value = obj[s] || ''; input.disabled = false; });
+      let prm = document.getElementById(`input_${id}_보험료`); prm.value = obj['보험료'] || ''; prm.disabled = false; formatCurrency(prm); calcSum(id);
     }
 
-    function updateButtonStates() {
-      const btnSave = document.getElementById('btn-save'); const btnClose = document.getElementById('btn-close');
-      if (!btnSave || !btnClose) return;
-      if (isWeekClosed) {
-        btnSave.style.display = 'none'; btnClose.innerText = "주 마감 취소하기"; btnClose.className = "w-full bg-slate-300 text-slate-700 font-bold py-3.5 rounded-xl transition text-sm shadow-md"; btnClose.disabled = false;
+    // 1-Button UI (상태에 따른 표시)
+    function updateUnifiedButtonState(isClosed) {
+      const btn = document.getElementById('btn-unified-save');
+      if (isClosed) {
+        btn.className = "w-full bg-slate-400 text-white font-bold py-4 rounded-xl transition text-sm shadow-md mt-2";
+        btn.innerText = "입력한 정보로 업데이트하기";
       } else {
-        btnSave.style.display = 'block'; btnSave.innerText = isWeekSaved ? "주초 마감 취소하기" : "주초 마감하기 (저장하기)"; btnSave.className = isWeekSaved ? "w-full bg-slate-200 text-slate-600 font-bold py-3.5 rounded-xl transition text-sm shadow-md" : "w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl transition text-sm shadow-md"; btnSave.disabled = false;
-        btnClose.innerText = "주 마감하기 (저장하기)";
-        if (!isWeekSaved) { btnClose.className = "w-full bg-slate-200 text-slate-400 font-bold py-3.5 rounded-xl transition text-sm cursor-not-allowed"; btnClose.disabled = true; } 
-        else { btnClose.className = "w-full bg-[#ea580c] text-white font-bold py-3.5 rounded-xl transition text-sm shadow-md"; btnClose.disabled = false; }
+        btn.className = "w-full bg-[#ea580c] text-white font-bold py-4 rounded-xl transition text-sm shadow-md mt-2";
+        btn.innerText = "결과 및 예정 확정하기 (저장)";
       }
     }
 
-    async function handleWeeklyAction(type) {
-      if (type === 'close' && !isWeekSaved && !isWeekClosed) return; 
-      const isCancelSave = (type === 'save' && isWeekSaved); const isCancelClose = (type === 'close' && isWeekClosed);
-      const btn = document.getElementById(type === 'save' ? 'btn-save' : 'btn-close');
-
-      if (isCancelSave || isCancelClose) {
-        if(!confirm("취소하시겠습니까?")) return;
-        btn.classList.add('btn-loading'); btn.innerText = "취소 중...";
-        const res = await callApi({ action: 'cancel', type: type, empId: globalData.empId, currYear: weekContext.currYear, currWeek: weekContext.currWeek, nextYear: weekContext.nextYear, nextWeek: weekContext.nextWeek });
-        if(res) { alert(res.message); statsCache = {}; await loadActivityData(); }
-      } else {
-        let empty = false; [...stages, '보험료'].forEach(s => { if(!document.getElementById(`input_currActual_${s}`).value.trim() || !document.getElementById(`input_nextPlan_${s}`).value.trim()) empty = true; });
-        if(empty) { alert("결과 또는 예정 항목에 빈 항목이 있습니다."); return; }
-        if(!confirm("저장하시겠습니까?")) return;
-        btn.classList.add('btn-loading'); btn.innerText = "저장 중...";
-        const payload = { empId: globalData.empId, name: globalData.name, teamName: globalData.teamName, currYear: weekContext.currYear, currWeek: weekContext.currWeek, nextYear: weekContext.nextYear, nextWeek: weekContext.nextWeek, currActualValues: getPayload(('currActual')), nextPlanValues: getPayload(('nextPlan')), isManualMode: globalData.isManualMode };
-        const res = await callApi({ action: 'submit', type: type, payload: payload });
-        if(res) { alert(res.message); statsCache = {}; await loadActivityData(); }
-      }
+    // 통합 마감/저장 함수
+    async function handleUnifiedSave() {
+      let empty = false; [...stages, '보험료'].forEach(s => { if(!document.getElementById(`input_currActual_${s}`).value.trim() || !document.getElementById(`input_nextPlan_${s}`).value.trim()) empty = true; });
+      if(empty) { alert("결과 또는 예정 항목에 빈 항목이 있습니다."); return; }
+      if(!confirm("이대로 결과를 확정(저장)하시겠습니까?")) return;
+      
+      const btn = document.getElementById('btn-unified-save');
+      btn.classList.add('btn-loading'); btn.innerText = "저장 중...";
+      
+      const payload = { empId: globalData.empId, name: globalData.name, teamName: globalData.teamName, currYear: viewContext.currYear, currWeek: viewContext.currWeek, nextYear: viewContext.nextYear, nextWeek: viewContext.nextWeek, currActualValues: getPayload('currActual'), nextPlanValues: getPayload('nextPlan'), isManualMode: globalData.isManualMode };
+      const res = await callApi({ action: 'submit', payload: payload });
+      if(res) { alert(res.message); statsCache = {}; await loadDataForOffset(currentWeekOffset); }
       btn.classList.remove('btn-loading');
     }
 
     function getPayload(id) { let v = {}; stages.forEach(s => v[s] = document.getElementById(`input_${id}_${s}`).value); v['활동계'] = document.getElementById(`sum_${id}`).innerText; v['보험료'] = document.getElementById(`input_${id}_보험료`).value.replace(/[^0-9]/g, ''); return v; }
+
+    function manualReload() { statsCache = {}; if (currentWeekOffset !== 0) loadDataForOffset(0); loadDataForOffset(currentWeekOffset); }
 
     function switchTab(id, btn) {
       document.querySelectorAll('#mainContentArea > div').forEach(el => el.classList.add('hidden-view'));
@@ -431,49 +399,32 @@
       btn.classList.replace('text-gray-400', 'text-[#ea580c]');
       document.getElementById('mainContentArea').scrollTop = 0;
       if(id === 'tab-stats') loadStatsData();
-      if(id === 'tab-home') renderHomeDashboard();
     }
 
-    async function prefetchStatsData() { const res = await callApi({ action: 'getStats', empId: globalData.empId, weeksLimit: document.getElementById('statsPeriod').value, year: weekContext.currYear, week: weekContext.currWeek }); if(res) statsCache[document.getElementById('statsPeriod').value] = { data: res, time: Date.now() }; }
+    async function prefetchStatsData() { const res = await callApi({ action: 'getStats', empId: globalData.empId, weeksLimit: document.getElementById('statsPeriod').value, year: homeContext.currYear, week: homeContext.currWeek }); if(res) statsCache[document.getElementById('statsPeriod').value] = { data: res, time: Date.now() }; }
 
     function renderHomeDashboard() {
-      if (!lastFetchedData) return;
-      const actual = lastFetchedData.currActual; const goals = globalData.goals || {};
-      
+      if (!homeData) return;
+      const actual = homeData.currActual; const goals = globalData.goals || {};
       let html = [...stages, '활동계', '보험료'].map(s => {
         const gV = parseInt(String(goals[s]||'0').replace(/[^0-9]/g, '')) || 0; const aV = parseInt(String(actual[s]||'0').replace(/[^0-9]/g, '')) || 0;
         const ratio = gV > 0 ? Math.min(Math.round((aV/gV)*100), 100) : (aV>0?100:0);
         let color = 'bg-red-500'; if(ratio>=85) color='bg-emerald-500'; else if(ratio>=70) color='bg-amber-500';
         let dispA = s==='보험료' ? aV.toLocaleString()+'원' : aV.toLocaleString(); let dispG = s==='보험료' ? gV.toLocaleString()+'원' : gV.toLocaleString();
-        
-        return `<div class="space-y-1.5">
-          <div class="flex justify-between text-[13px] font-bold text-slate-700">
-            <span>${s}</span>
-            <span class="font-bold text-slate-700">${dispA} <span class="text-slate-400 font-normal">/ ${dispG}</span></span>
-          </div>
-          <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden"><div class="${color} h-full transition-all duration-1000" style="width: ${ratio}%"></div></div>
-        </div>`;
+        return `<div class="space-y-1.5"><div class="flex justify-between text-[13px] font-bold text-slate-700"><span>${s}</span><span class="font-bold text-slate-700">${dispA} <span class="text-slate-400 font-normal">/ ${dispG}</span></span></div><div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden"><div class="${color} h-full transition-all duration-1000" style="width: ${ratio}%"></div></div></div>`;
       }).join('');
       document.getElementById('home-progress-container').innerHTML = html;
-      
       document.getElementById('home-next-status').innerHTML = ['AP','P','C','N'].map(s => {
-        const pV = parseInt(lastFetchedData.nextPlan[s]) || 0;
-        const gV = parseInt(String(goals[s]||'0').replace(/[^0-9]/g, '')) || 0;
-        return `<div class="bg-white border border-slate-100 rounded-xl p-3 shadow-sm flex flex-col items-center justify-center">
-          <span class="text-[10px] font-bold text-slate-400 mb-1">${s}</span>
-          <div class="flex items-baseline space-x-1">
-            <span class="text-[18px] font-black text-blue-600">${pV}</span>
-            <span class="text-[11px] font-medium text-slate-400">/ ${gV}</span>
-          </div>
-        </div>`;
+        const pV = parseInt(homeData.nextPlan[s]) || 0; const gV = parseInt(String(goals[s]||'0').replace(/[^0-9]/g, '')) || 0;
+        return `<div class="bg-white border border-slate-100 rounded-xl p-3 shadow-sm flex flex-col items-center justify-center"><span class="text-[10px] font-bold text-slate-400 mb-1">${s}</span><div class="flex items-baseline space-x-1"><span class="text-[18px] font-black text-blue-600">${pV}</span><span class="text-[11px] font-medium text-slate-400">/ ${gV}</span></div></div>`;
       }).join('');
     }
 
     async function loadStatsData() {
       const limit = document.getElementById('statsPeriod').value;
-      if (statsCache[limit] && (Date.now() - statsCache[limit].time < CACHE_TTL)) { renderStats(statsCache[limit].data); return; }
+      if (statsCache[limit] && (Date.now() - statsCache[limit].time < 15 * 60 * 1000)) { renderStats(statsCache[limit].data); return; }
       document.getElementById('statsGrid').innerHTML = '<p class="text-center py-10 text-slate-400 text-xs">데이터 계산 중...</p>';
-      const res = await callApi({ action: 'getStats', empId: globalData.empId, weeksLimit: limit, year: weekContext.currYear, week: weekContext.currWeek });
+      const res = await callApi({ action: 'getStats', empId: globalData.empId, weeksLimit: limit, year: homeContext.currYear, week: homeContext.currWeek });
       if(res) { statsCache[limit] = { data: res, time: Date.now() }; renderStats(res); }
     }
 
