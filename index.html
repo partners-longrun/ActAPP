@@ -414,14 +414,14 @@
         btn.innerText = "입력한 정보로 업데이트하기";
       } else {
         btn.className = "w-full bg-[#ea580c] text-white font-bold py-4 rounded-xl transition text-sm shadow-md mt-2";
-        btn.innerText = "결과 및 예정 확정하기 (저장)";
+        btn.innerText = "결과 및 예정 저장하기";
       }
     }
 
     async function handleUnifiedSave() {
       let empty = false; [...stages, '보험료'].forEach(s => { if(!document.getElementById(`input_currActual_${s}`).value.trim() || !document.getElementById(`input_nextPlan_${s}`).value.trim()) empty = true; });
       if(empty) { alert("결과 또는 예정 항목에 빈 항목이 있습니다."); return; }
-      if(!confirm("이대로 결과를 확정(저장)하시겠습니까?")) return;
+      if(!confirm("이대로 결과를 저장 하시겠습니까?")) return;
       
       const btn = document.getElementById('btn-unified-save');
       btn.classList.add('btn-loading'); btn.innerText = "저장 중...";
