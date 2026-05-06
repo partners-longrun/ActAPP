@@ -23,7 +23,6 @@
 
   <div class="w-full h-[100vh] sm:h-[850px] sm:max-w-md bg-white sm:rounded-[2rem] sm:shadow-2xl overflow-hidden flex flex-col relative shadow-inner">
 
-    <!-- 로그인 화면 -->
     <div id="view-login" class="flex flex-col items-center justify-center h-full p-8 fade-in bg-[#f8fafc]">
       <div class="w-24 h-24 bg-[#ea580c] rounded-3xl flex items-center justify-center shadow-lg mb-8"><i data-lucide="calendar" class="w-12 h-12 text-white"></i></div>
       <div class="text-center space-y-2 mb-12"><h1 class="text-2xl font-bold text-gray-800">파트너스 활동 관리</h1><p class="text-gray-500 text-sm mt-2">영업 활동을 스마트하게 기록하세요.</p></div>
@@ -37,7 +36,6 @@
       </div>
     </div>
 
-    <!-- 기본 정보 입력 화면 -->
     <div id="view-setup" class="hidden-view flex flex-col h-full p-6 fade-in bg-white">
       <h2 class="text-2xl font-bold text-gray-900 mb-8 mt-4">기본 정보 입력</h2>
       <div class="space-y-5 flex-1">
@@ -50,7 +48,6 @@
       <button id="btnStart" disabled onclick="startApp()" class="w-full bg-gray-300 text-white font-bold py-4 rounded-xl mt-4 transition">시작하기</button>
     </div>
 
-    <!-- 메인 앱 헤더 -->
     <div id="view-app-header" class="bg-white px-6 py-4 rounded-b-3xl shadow-sm z-10 flex justify-between items-center border-b border-slate-100 hidden-view">
       <div>
         <h2 class="text-lg font-bold text-gray-900"><span id="displayName">파트너</span>님, 환영합니다</h2>
@@ -62,10 +59,8 @@
       </div>
     </div>
 
-    <!-- 메인 컨텐츠 영역 -->
     <div class="flex-1 overflow-y-auto p-4 pb-24 relative" id="mainContentArea">
       
-      <!-- [탭 0] 홈 대시보드 -->
       <div id="tab-home" class="hidden-view fade-in p-2 space-y-6">
         <section>
           <div class="flex items-center justify-between mb-4">
@@ -86,7 +81,6 @@
         </section>
       </div>
 
-      <!-- [탭 1] 활동 기록 -->
       <div id="tab-activity" class="hidden-view fade-in p-2">
         <div class="flex justify-between items-center mb-4 bg-white p-3 rounded-xl shadow-sm border border-slate-100">
           <button id="btnPrevWeek" onclick="changeWeek(-1)" class="p-2 bg-slate-50 rounded-lg transition active:scale-95"><i data-lucide="chevron-left" class="w-5 h-5 text-slate-600"></i></button>
@@ -101,7 +95,6 @@
         <button id="btn-unified-save" onclick="handleUnifiedSave()" class="w-full font-bold py-4 rounded-xl transition text-sm shadow-md mt-2"></button>
       </div>
       
-      <!-- [탭 2] 통계 -->
       <div id="tab-stats" class="hidden-view fade-in p-2">
         <div class="flex justify-between items-start" style="margin-top: 4px;">
           <p class="text-[11px] text-slate-500 leading-relaxed flex-1">누적 활동 결과에 따른 통계입니다.<br>활동관리에 참고하시기 바랍니다.</p>
@@ -117,7 +110,6 @@
         <div id="convGrid" class="grid grid-cols-2 gap-3 mt-3"></div>
       </div>
 
-      <!-- [탭 3] 설정 -->
       <div id="tab-settings" class="hidden-view fade-in p-2 space-y-4">
         <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-center relative">
            <p class="text-xs font-bold text-slate-500 mb-1">인증된 파트너 정보</p>
@@ -150,7 +142,6 @@
       </div>
     </div>
 
-    <!-- 하단 내비게이션 -->
     <div id="view-nav" class="absolute bottom-0 w-full bg-white border-t border-gray-200 flex justify-around pb-6 pt-3 sm:rounded-b-[2rem] hidden-view">
       <button onclick="switchTab('tab-home', this)" class="nav-btn flex flex-col items-center text-[#ea580c]"><i data-lucide="home" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">홈</span></button>
       <button onclick="switchTab('tab-activity', this)" class="nav-btn flex flex-col items-center text-gray-400"><i data-lucide="calendar" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">활동 기록</span></button>
@@ -167,21 +158,7 @@
     let homeContext = {}; let viewContext = {}; let currentWeekOffset = 0;
     let homeData = null; let activityData = null; let statsCache = {};
     let hasAlertedSync = false; 
-    
     const stages = ['TA', 'AP', 'P', 'C', 'N', '소개'];
-
-    // [신규] 캘린더에서 읽어온 데이터가 완벽히 '0'인지 확인하는 로직
-    function checkDataEmpty(data) {
-      if (!data) return true;
-      let total = 0;
-      stages.forEach(s => {
-        total += parseInt((data.currActual || {})[s]) || 0;
-        total += parseInt((data.nextPlan || {})[s]) || 0;
-      });
-      total += parseInt((data.currActual || {})['보험료']) || 0;
-      total += parseInt((data.nextPlan || {})['보험료']) || 0;
-      return total === 0;
-    }
 
     async function callApi(data) {
       try {
@@ -218,7 +195,6 @@
       const email = document.getElementById('inputEmail').value;
       if (!name || !empId) return;
       if (!globalData.isManualMode && !email) { alert("구글 계정(이메일)을 입력해주세요."); return; }
-
       document.getElementById('btnVerify').innerText = "확인 중...";
       const res = await callApi({ action: 'verify', name, empId, email });
       if(res && res.success) {
@@ -234,11 +210,8 @@
 
     function startApp() { 
       localStorage.setItem('partnersAppUser', JSON.stringify(globalData)); 
-      setupUserSettings(); 
-      showApp(); 
-      if (!globalData.isManualMode) {
-        alert("[안내] 원활한 활동 관리를 위해\n[설정] 탭으로 이동하여 '활동관리앱 계정에 캘린더 공유하기' 버튼을 눌러 계정 공유(필수)를 진행해 주시기 바랍니다.");
-      }
+      setupUserSettings(); showApp(); 
+      if (!globalData.isManualMode) alert("[안내] 원활한 활동 관리를 위해\n[설정] 탭으로 이동하여 '활동관리앱 계정에 캘린더 공유하기' 버튼을 눌러 계정 공유(필수)를 진행해 주시기 바랍니다.");
       initActivityScreen(); 
     }
 
@@ -248,27 +221,18 @@
       document.getElementById('displayName').innerText = globalData.name;
       document.getElementById('settingName').innerText = `${globalData.name} (${globalData.empId})`;
       document.getElementById('settingTeam').innerText = globalData.teamName || '-';
-      
       if (globalData.isManualMode) document.getElementById('settingEmailBlock').style.display = 'none';
       else { document.getElementById('settingEmailBlock').style.display = 'block'; document.getElementById('settingEmail').innerText = globalData.email || '미입력'; }
-
       let goalHtml = stages.map(s => `<div class="text-center"><p class="text-[11px] font-bold text-slate-500 mb-1">${s}</p><input type="number" id="goal_${s}" oninput="calcGoalSum()" class="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-orange-500" value="${globalData.goals[s]||''}"></div>`).join('');
       document.getElementById('goalInputs').innerHTML = goalHtml;
       document.getElementById('goal_활동계').value = globalData.goals['활동계'] || '';
-      
       const goalPremium = document.getElementById('goal_보험료');
       goalPremium.value = globalData.goals['보험료'] || '';
       formatCurrency(goalPremium);
-
       const btnGoalSave = document.getElementById('btn-save-goals');
       const hasGoalData = globalData.goals && globalData.goals['활동계'] && parseInt(globalData.goals['활동계']) > 0;
-      if (hasGoalData) {
-        btnGoalSave.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl text-sm shadow-md transition mt-2";
-        btnGoalSave.innerText = "입력된 목표로 다시 저장";
-      } else {
-        btnGoalSave.className = "w-full bg-slate-800 text-white font-bold py-3 rounded-xl text-sm shadow-md transition mt-2";
-        btnGoalSave.innerText = "목표 저장하기";
-      }
+      if (hasGoalData) { btnGoalSave.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl text-sm shadow-md transition mt-2"; btnGoalSave.innerText = "입력된 목표로 다시 저장"; } 
+      else { btnGoalSave.className = "w-full bg-slate-800 text-white font-bold py-3 rounded-xl text-sm shadow-md transition mt-2"; btnGoalSave.innerText = "목표 저장하기"; }
     }
 
     async function editEmail() {
@@ -294,27 +258,15 @@
     function calcGoalSum() { let sum = 0; stages.forEach(s => sum += parseInt(document.getElementById(`goal_${s}`).value) || 0); document.getElementById('goal_활동계').value = sum; }
     
     async function saveUserGoals() {
-      const btn = document.getElementById('btn-save-goals');
-      const originalText = btn.innerText;
-      btn.classList.add('btn-loading');
-      btn.innerText = "저장 중...";
-
+      const btn = document.getElementById('btn-save-goals'); const originalText = btn.innerText;
+      btn.classList.add('btn-loading'); btn.innerText = "저장 중...";
       const newGoals = {}; stages.forEach(s => newGoals[s] = document.getElementById(`goal_${s}`).value);
       newGoals['활동계'] = document.getElementById('goal_활동계').value; newGoals['보험료'] = document.getElementById('goal_보험료').value;
       globalData.goals = newGoals; localStorage.setItem('partnersAppUser', JSON.stringify(globalData));
-      
       const res = await callApi({ action: 'saveGoals', empId: globalData.empId, name: globalData.name, teamName: globalData.teamName, goals: newGoals });
-      
       btn.classList.remove('btn-loading');
-      if(res && res.success) { 
-        btn.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl text-sm shadow-md transition mt-2";
-        btn.innerText = "입력된 목표로 다시 저장";
-        alert("목표가 저장되었습니다."); 
-        renderHomeDashboard(); 
-      } else {
-        btn.innerText = originalText;
-        alert("오류가 발생했습니다.");
-      }
+      if(res && res.success) { btn.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl text-sm shadow-md transition mt-2"; btn.innerText = "입력된 목표로 다시 저장"; alert("목표가 저장되었습니다."); renderHomeDashboard(); } 
+      else { btn.innerText = originalText; alert("오류가 발생했습니다."); }
     }
 
     function formatLocalDate(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -322,25 +274,16 @@
     function calculateCustomWeek(offsetWeeks = 0) {
       const today = new Date(); const days = ['일', '월', '화', '수', '목', '금', '토'];
       let targetDate = new Date(today); targetDate.setDate(targetDate.getDate() + (offsetWeeks * 7));
-      
       let realBase = new Date(targetDate); realBase.setHours(0,0,0,0); realBase.setDate(realBase.getDate() + 3 - (realBase.getDay() + 6) % 7);
       const realWeek1 = new Date(realBase.getFullYear(), 0, 4);
       const realCurrWeek = Math.round(((realBase.getTime() - realWeek1.getTime()) / 86400000 - 3 + (realWeek1.getDay() + 6) % 7) / 7) + 1;
-
       let base = new Date(targetDate); if (targetDate.getDay() === 1) base.setDate(base.getDate() - 1);
       base.setHours(0,0,0,0); base.setDate(base.getDate() + 3 - (base.getDay() + 6) % 7);
       const week1 = new Date(base.getFullYear(), 0, 4);
       const currWeek = Math.round(((base.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7) + 1;
       const mon = new Date(base); mon.setDate(mon.getDate() - (mon.getDay() || 7) + 1);
       const nextMon = new Date(mon); nextMon.setDate(nextMon.getDate() + 7);
-      
-      return { 
-        todayStr: targetDate.getFullYear()+'-'+String(targetDate.getMonth()+1).padStart(2,'0')+'-'+String(targetDate.getDate()).padStart(2,'0')+'('+days[targetDate.getDay()]+')', 
-        realCurrWeek: realCurrWeek, currYear: base.getFullYear(), currWeek: currWeek, 
-        currMonday: formatLocalDate(mon), 
-        nextYear: nextMon.getFullYear(), nextWeek: (currWeek>=52?1:currWeek+1), 
-        nextMonday: formatLocalDate(nextMon) 
-      };
+      return { todayStr: targetDate.getFullYear()+'-'+String(targetDate.getMonth()+1).padStart(2,'0')+'-'+String(targetDate.getDate()).padStart(2,'0')+'('+days[targetDate.getDay()]+')', realCurrWeek: realCurrWeek, currYear: base.getFullYear(), currWeek: currWeek, currMonday: formatLocalDate(mon), nextYear: nextMon.getFullYear(), nextWeek: (currWeek>=52?1:currWeek+1), nextMonday: formatLocalDate(nextMon) };
     }
 
     function formatCurrency(el) { let v = el.value.replace(/[^0-9]/g, ''); el.value = v ? parseInt(v, 10).toLocaleString() : ''; }
@@ -363,43 +306,25 @@
       await loadDataForOffset(0);
     }
 
-    function changeWeek(delta) {
-      currentWeekOffset += delta;
-      if (currentWeekOffset > 0) currentWeekOffset = 0; 
-      loadDataForOffset(currentWeekOffset);
-    }
+    function changeWeek(delta) { currentWeekOffset += delta; if (currentWeekOffset > 0) currentWeekOffset = 0; loadDataForOffset(currentWeekOffset); }
 
     async function loadDataForOffset(offset) {
-      const btnPrev = document.getElementById('btnPrevWeek');
-      const btnNext = document.getElementById('btnNextWeek');
-      
-      if(btnPrev) btnPrev.classList.add('disabled-nav');
-      if(btnNext) btnNext.classList.add('disabled-nav');
+      const btnPrev = document.getElementById('btnPrevWeek'); const btnNext = document.getElementById('btnNextWeek');
+      if(btnPrev) btnPrev.classList.add('disabled-nav'); if(btnNext) btnNext.classList.add('disabled-nav');
       document.getElementById('headerReloadIcon').classList.add('animate-spin');
-      
       const context = calculateCustomWeek(offset);
-      const res = await callApi({ 
-        action: 'getData', empId: globalData.empId, name: globalData.name, teamName: globalData.teamName, email: globalData.email,
-        currYear: context.currYear, currWeek: context.currWeek, nextYear: context.nextYear, nextWeek: context.nextWeek, isManualMode: globalData.isManualMode 
-      });
-      
+      const res = await callApi({ action: 'getData', empId: globalData.empId, name: globalData.name, teamName: globalData.teamName, email: globalData.email, currYear: context.currYear, currWeek: context.currWeek, nextYear: context.nextYear, nextWeek: context.nextWeek, isManualMode: globalData.isManualMode });
       document.getElementById('headerReloadIcon').classList.remove('animate-spin');
-      if(btnPrev) btnPrev.classList.remove('disabled-nav');
-      if(btnNext) btnNext.classList.remove('disabled-nav');
+      if(btnPrev) btnPrev.classList.remove('disabled-nav'); if(btnNext) btnNext.classList.remove('disabled-nav');
       
       if(res) {
         viewContext = context; activityData = res;
-        
-        // [신규] 캘린더 동기화 결과가 0건인지 판단 후 맞춤형 팝업 표출
+        // [핵심수정] 캘린더가 비어있다면(calendarEmpty:true), 시트에 데이터가 있더라도 수동 안내 팝업 출력
         if (res.synced && !hasAlertedSync) {
-          if (checkDataEmpty(res)) {
-             alert("캘린더에 활동 일정이 없습니다.\n활동 내용을 수동으로 입력/저장해 주세요.");
-          } else {
-             alert('캘린더 일정대로 단계별 활동을 저장하였습니다.');
-          }
+          if (res.calendarEmpty) alert("캘린더에 활동 일정이 없습니다.\n활동 내용을 수동으로 입력/저장해 주세요.");
+          else alert('캘린더 일정대로 단계별 활동을 저장하였습니다.');
           hasAlertedSync = true;
         }
-
         if (offset === 0) {
           homeData = res; renderHomeDashboard(); prefetchStatsData();
           if (res.calError) { alert("캘린더 데이터를 불러오지 못했습니다.\n[설정] 탭에서 '활동관리앱 계정에 캘린더 공유하기'를 완료해 주세요."); document.getElementById('syncStatusMsg').innerHTML = `<div class="w-2 h-2 rounded-full bg-red-500 mr-1.5"></div> 공유 대기중`; } 
@@ -412,15 +337,12 @@
     function renderActivityTab(offset) {
       document.getElementById('activityWeekLabel').innerText = `${viewContext.currWeek}주차 기록`;
       document.getElementById('activityWeekDate').innerText = viewContext.currMonday;
-
       const btnNext = document.getElementById('btnNextWeek');
       if (offset >= 0) { btnNext.disabled = true; btnNext.classList.replace('text-slate-600', 'text-slate-300'); btnNext.classList.add('cursor-not-allowed'); } 
       else { btnNext.disabled = false; btnNext.classList.replace('text-slate-300', 'text-slate-600'); btnNext.classList.remove('cursor-not-allowed'); }
-
       document.getElementById('cardsContainer').innerHTML = buildCardHtml('currPlan', viewContext.currWeek, viewContext.currMonday, '예정', false, 'text-blue-600') + buildCardHtml('currActual', viewContext.currWeek, viewContext.currMonday, '결과', true, 'text-[#ea580c]') + buildCardHtml('nextPlan', viewContext.nextWeek, viewContext.nextMonday, '예정', true, 'text-blue-600');
       lucide.createIcons();
       fillCardData('currPlan', activityData.currPlan); fillCardData('currActual', activityData.currActual); fillCardData('nextPlan', activityData.nextPlan);
-      
       updateUnifiedButtonState(activityData.isClosed);
     }
 
@@ -429,64 +351,35 @@
       let prm = document.getElementById(`input_${id}_보험료`); prm.value = obj['보험료'] || ''; prm.disabled = false; formatCurrency(prm); calcSum(id);
     }
 
-    // [신규] 활동 기록 탭 저장 버튼 분기 처리
     function updateUnifiedButtonState(isClosed) {
       const btn = document.getElementById('btn-unified-save');
-      const isEmpty = checkDataEmpty(activityData);
-
       if (isClosed) {
         btn.className = "w-full bg-slate-400 text-white font-bold py-4 rounded-xl transition text-sm shadow-md mt-2";
         btn.innerText = "입력한 값으로 활동 업데이트하기";
       } else {
         btn.className = "w-full bg-[#ea580c] text-white font-bold py-4 rounded-xl transition text-sm shadow-md mt-2";
-        
-        // 수동 모드거나 캘린더 연동자인데 스캔 결과가 완전한 0인 경우
-        if (globalData.isManualMode || isEmpty) {
-          btn.innerText = "결과 및 예정 저장하기";
-        } else {
-          btn.innerText = "주 마감하기 (결과 및 예정)";
-        }
+        // [핵심수정] 캘린더가 비어있다면 버튼 이름을 '결과 및 예정 저장하기'로 고정
+        if (globalData.isManualMode || activityData.calendarEmpty) btn.innerText = "결과 및 예정 저장하기";
+        else btn.innerText = "주 마감하기 (결과 및 예정)";
       }
     }
 
     async function handleUnifiedSave() {
       let empty = false; [...stages, '보험료'].forEach(s => { if(!document.getElementById(`input_currActual_${s}`).value.trim() || !document.getElementById(`input_nextPlan_${s}`).value.trim()) empty = true; });
       if(empty) { alert("결과 또는 예정 항목에 빈 항목이 있습니다."); return; }
-      
-      // 알림창 텍스트 사용자 맞춤 표시
-      const isEmpty = checkDataEmpty(activityData);
-      const confirmMsg = (globalData.isManualMode || isEmpty) ? "결과 및 예정을 저장하시겠습니까?" : "이대로 주 마감(결과 및 예정)을 확정하시겠습니까?";
+      const confirmMsg = (globalData.isManualMode || activityData.calendarEmpty) ? "결과 및 예정을 저장하시겠습니까?" : "이대로 주 마감(결과 및 예정)을 확정하시겠습니까?";
       if(!confirm(confirmMsg)) return;
-      
       const btn = document.getElementById('btn-unified-save');
       btn.classList.add('btn-loading'); btn.innerText = "저장 중...";
-      
       const payload = { empId: globalData.empId, name: globalData.name, teamName: globalData.teamName, currYear: viewContext.currYear, currWeek: viewContext.currWeek, nextYear: viewContext.nextYear, nextWeek: viewContext.nextWeek, currActualValues: getPayload('currActual'), nextPlanValues: getPayload('nextPlan'), isManualMode: globalData.isManualMode };
       const res = await callApi({ action: 'submit', payload: payload });
-      
       btn.classList.remove('btn-loading');
-      if(res) { 
-        alert(res.message); 
-        statsCache = {}; 
-        
-        activityData.isClosed = true;
-        updateUnifiedButtonState(true);
-      }
+      if(res) { alert(res.message); statsCache = {}; activityData.isClosed = true; updateUnifiedButtonState(true); }
     }
 
     function getPayload(id) { let v = {}; stages.forEach(s => v[s] = document.getElementById(`input_${id}_${s}`).value); v['활동계'] = document.getElementById(`sum_${id}`).innerText; v['보험료'] = document.getElementById(`input_${id}_보험료`).value.replace(/[^0-9]/g, ''); return v; }
-
     function manualReload() { statsCache = {}; if (currentWeekOffset !== 0) loadDataForOffset(0); loadDataForOffset(currentWeekOffset); }
-
-    function switchTab(id, btn) {
-      document.querySelectorAll('#mainContentArea > div').forEach(el => el.classList.add('hidden-view'));
-      document.getElementById(id).classList.remove('hidden-view');
-      document.querySelectorAll('.nav-btn').forEach(el => { el.classList.replace('text-[#ea580c]', 'text-gray-400'); });
-      btn.classList.replace('text-gray-400', 'text-[#ea580c]');
-      document.getElementById('mainContentArea').scrollTop = 0;
-      if(id === 'tab-stats') loadStatsData();
-    }
-
+    function switchTab(id, btn) { document.querySelectorAll('#mainContentArea > div').forEach(el => el.classList.add('hidden-view')); document.getElementById(id).classList.remove('hidden-view'); document.querySelectorAll('.nav-btn').forEach(el => { el.classList.replace('text-[#ea580c]', 'text-gray-400'); }); btn.classList.replace('text-gray-400', 'text-[#ea580c]'); document.getElementById('mainContentArea').scrollTop = 0; if(id === 'tab-stats') loadStatsData(); }
     async function prefetchStatsData() { const res = await callApi({ action: 'getStats', empId: globalData.empId, weeksLimit: document.getElementById('statsPeriod').value, year: homeContext.currYear, week: homeContext.currWeek }); if(res) statsCache[document.getElementById('statsPeriod').value] = { data: res, time: Date.now() }; }
 
     function renderHomeDashboard() {
