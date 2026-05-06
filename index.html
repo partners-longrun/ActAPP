@@ -89,13 +89,11 @@
       <!-- [탭 1] 활동 기록 -->
       <div id="tab-activity" class="hidden-view fade-in p-2">
         <div class="flex justify-between items-center mb-4 bg-white p-3 rounded-xl shadow-sm border border-slate-100">
-          <!-- 버튼 중복 클릭 방지를 위해 ID 부여 -->
           <button id="btnPrevWeek" onclick="changeWeek(-1)" class="p-2 bg-slate-50 rounded-lg transition active:scale-95"><i data-lucide="chevron-left" class="w-5 h-5 text-slate-600"></i></button>
           <div class="text-center">
             <p class="text-sm font-bold text-slate-800" id="activityWeekLabel">0주차 기록</p>
             <p class="text-[10px] text-slate-500 font-bold mt-0.5" id="activityWeekDate">YYYY-MM-DD</p>
           </div>
-          <!-- 버튼 중복 클릭 방지를 위해 ID 부여 -->
           <button id="btnNextWeek" onclick="changeWeek(1)" class="p-2 bg-slate-50 rounded-lg transition active:scale-95"><i data-lucide="chevron-right" class="w-5 h-5 text-slate-600"></i></button>
         </div>
         
@@ -147,7 +145,6 @@
             <div><p class="text-[10px] font-bold text-emerald-700 mb-1 text-center">활동계(자동)</p><input type="number" id="goal_활동계" readonly class="w-full text-center py-2 bg-emerald-50 border border-emerald-200 rounded-lg font-bold outline-none text-emerald-800"></div>
             <div><p class="text-[10px] text-center font-bold text-slate-500 mb-1">보험료</p><input type="text" inputmode="numeric" id="goal_보험료" oninput="formatCurrency(this)" class="w-full text-center py-2 border rounded-lg font-bold outline-none text-slate-800"></div>
           </div>
-          <!-- ID 부여: 상태 변화 대응 -->
           <button id="btn-save-goals" onclick="saveUserGoals()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl text-sm shadow-md transition">목표 저장하기</button>
         </div>
       </div>
@@ -169,6 +166,8 @@
     let globalData = { isManualMode: false, goals: {}, email: "" };
     let homeContext = {}; let viewContext = {}; let currentWeekOffset = 0;
     let homeData = null; let activityData = null; let statsCache = {};
+    let hasAlertedSync = false; // 동기화 팝업 제어용 변수
+    
     const stages = ['TA', 'AP', 'P', 'C', 'N', '소개'];
 
     async function callApi(data) {
@@ -248,7 +247,6 @@
       goalPremium.value = globalData.goals['보험료'] || '';
       formatCurrency(goalPremium);
 
-      // 목표 저장 버튼 상태 동적 할당
       const btnGoalSave = document.getElementById('btn-save-goals');
       const hasGoalData = globalData.goals && globalData.goals['활동계'] && parseInt(globalData.goals['활동계']) > 0;
       if (hasGoalData) {
@@ -362,7 +360,6 @@
       const btnPrev = document.getElementById('btnPrevWeek');
       const btnNext = document.getElementById('btnNextWeek');
       
-      // Debounce: 통신 중 좌우 이동 버튼 비활성화
       if(btnPrev) btnPrev.classList.add('disabled-nav');
       if(btnNext) btnNext.classList.add('disabled-nav');
       document.getElementById('headerReloadIcon').classList.add('animate-spin');
@@ -379,6 +376,13 @@
       
       if(res) {
         viewContext = context; activityData = res;
+        
+        // 동기화 완료 알림 (앱 접속 직후 최초 1회만 표시)
+        if (res.synced && !hasAlertedSync) {
+          alert('캘린더 일정대로 단계별 활동을 저장하였습니다.');
+          hasAlertedSync = true;
+        }
+
         if (offset === 0) {
           homeData = res; renderHomeDashboard(); prefetchStatsData();
           if (res.calError) { alert("캘린더 데이터를 불러오지 못했습니다.\n[설정] 탭에서 '활동관리앱 계정에 캘린더 공유하기'를 완료해 주세요."); document.getElementById('syncStatusMsg').innerHTML = `<div class="w-2 h-2 rounded-full bg-red-500 mr-1.5"></div> 공유 대기중`; } 
@@ -399,6 +403,8 @@
       document.getElementById('cardsContainer').innerHTML = buildCardHtml('currPlan', viewContext.currWeek, viewContext.currMonday, '예정', false, 'text-blue-600') + buildCardHtml('currActual', viewContext.currWeek, viewContext.currMonday, '결과', true, 'text-[#ea580c]') + buildCardHtml('nextPlan', viewContext.nextWeek, viewContext.nextMonday, '예정', true, 'text-blue-600');
       lucide.createIcons();
       fillCardData('currPlan', activityData.currPlan); fillCardData('currActual', activityData.currActual); fillCardData('nextPlan', activityData.nextPlan);
+      
+      // 버튼 UI 사용자별 반영 업데이트
       updateUnifiedButtonState(activityData.isClosed);
     }
 
@@ -407,29 +413,41 @@
       let prm = document.getElementById(`input_${id}_보험료`); prm.value = obj['보험료'] || ''; prm.disabled = false; formatCurrency(prm); calcSum(id);
     }
 
+    // 마감 상태 및 사용자에 따른 버튼 텍스트/디자인 변경
     function updateUnifiedButtonState(isClosed) {
       const btn = document.getElementById('btn-unified-save');
       if (isClosed) {
         btn.className = "w-full bg-slate-400 text-white font-bold py-4 rounded-xl transition text-sm shadow-md mt-2";
-        btn.innerText = "입력한 정보로 업데이트하기";
+        btn.innerText = "입력한 값으로 활동 업데이트하기";
       } else {
         btn.className = "w-full bg-[#ea580c] text-white font-bold py-4 rounded-xl transition text-sm shadow-md mt-2";
-        btn.innerText = "결과 및 예정 저장하기";
+        btn.innerText = globalData.isManualMode ? "결과 및 예정 저장하기" : "주 마감하기 (결과 및 예정)";
       }
     }
 
     async function handleUnifiedSave() {
       let empty = false; [...stages, '보험료'].forEach(s => { if(!document.getElementById(`input_currActual_${s}`).value.trim() || !document.getElementById(`input_nextPlan_${s}`).value.trim()) empty = true; });
       if(empty) { alert("결과 또는 예정 항목에 빈 항목이 있습니다."); return; }
-      if(!confirm("이대로 결과를 저장 하시겠습니까?")) return;
+      
+      // 사용자에 따른 확인 메시지
+      const confirmMsg = globalData.isManualMode ? "결과 및 예정을 저장하시겠습니까?" : "이대로 주 마감(결과 및 예정)을 확정하시겠습니까?";
+      if(!confirm(confirmMsg)) return;
       
       const btn = document.getElementById('btn-unified-save');
       btn.classList.add('btn-loading'); btn.innerText = "저장 중...";
       
       const payload = { empId: globalData.empId, name: globalData.name, teamName: globalData.teamName, currYear: viewContext.currYear, currWeek: viewContext.currWeek, nextYear: viewContext.nextYear, nextWeek: viewContext.nextWeek, currActualValues: getPayload('currActual'), nextPlanValues: getPayload('nextPlan'), isManualMode: globalData.isManualMode };
       const res = await callApi({ action: 'submit', payload: payload });
-      if(res) { alert(res.message); statsCache = {}; await loadDataForOffset(currentWeekOffset); }
+      
       btn.classList.remove('btn-loading');
+      if(res) { 
+        alert(res.message); 
+        statsCache = {}; 
+        
+        // 무거운 데이터 재로딩(loadDataForOffset) 없이 화면 그대로 둔 채 잠금 상태만 갱신
+        activityData.isClosed = true;
+        updateUnifiedButtonState(true);
+      }
     }
 
     function getPayload(id) { let v = {}; stages.forEach(s => v[s] = document.getElementById(`input_${id}_${s}`).value); v['활동계'] = document.getElementById(`sum_${id}`).innerText; v['보험료'] = document.getElementById(`input_${id}_보험료`).value.replace(/[^0-9]/g, ''); return v; }
