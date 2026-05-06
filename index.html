@@ -329,15 +329,13 @@
       if(res) {
         viewContext = context; activityData = res;
         
-        // [수정점] 캘린더가 비어있을 경우 (res.calendarEmpty가 true일 때) 최우선으로 안내 팝업을 표시
         if (!hasAlertedSync) {
           if (res.calendarEmpty) {
             alert("캘린더에 활동 일정이 없습니다.\n활동 내용을 수동으로 입력/저장해 주세요.");
-            hasAlertedSync = true;
           } else if (res.synced) {
             alert('캘린더 일정대로 단계별 활동을 저장하였습니다.');
-            hasAlertedSync = true;
           }
+          hasAlertedSync = true;
         }
 
         if (offset === 0) {
@@ -365,24 +363,23 @@
     function updateUnifiedButtonState(isClosed) {
       const btn = document.getElementById('btn-unified-save');
       
+      // [핵심수정] 캘린더 빈 상태(수동 전환)를 최우선으로 판단하여, isClosed와 결합해 버튼 통제
+      const isManual = globalData.isManualMode || activityData.calendarEmpty;
+
       if (isClosed) {
         btn.className = "w-full bg-slate-400 text-white font-bold py-4 rounded-xl transition text-sm shadow-md mt-2";
         btn.innerText = "입력한 값으로 활동 업데이트하기";
       } else {
         btn.className = "w-full bg-[#ea580c] text-white font-bold py-4 rounded-xl transition text-sm shadow-md mt-2";
-        // [수정점] 시트 마감과 상관없이 캘린더가 비어있다면 무조건 수동 사용자 모드로 버튼 변경
-        if (globalData.isManualMode || activityData.calendarEmpty) {
-          btn.innerText = "결과 및 예정 저장하기";
-        } else {
-          btn.innerText = "주 마감하기 (결과 및 예정)";
-        }
+        btn.innerText = isManual ? "결과 및 예정 저장하기" : "주 마감하기 (결과 및 예정)";
       }
     }
 
     async function handleUnifiedSave() {
       let empty = false; [...stages, '보험료'].forEach(s => { if(!document.getElementById(`input_currActual_${s}`).value.trim() || !document.getElementById(`input_nextPlan_${s}`).value.trim()) empty = true; });
       if(empty) { alert("결과 또는 예정 항목에 빈 항목이 있습니다."); return; }
-      const confirmMsg = (globalData.isManualMode || activityData.calendarEmpty) ? "결과 및 예정을 저장하시겠습니까?" : "이대로 주 마감(결과 및 예정)을 확정하시겠습니까?";
+      const isManual = globalData.isManualMode || activityData.calendarEmpty;
+      const confirmMsg = isManual ? "결과 및 예정을 저장하시겠습니까?" : "이대로 주 마감(결과 및 예정)을 확정하시겠습니까?";
       if(!confirm(confirmMsg)) return;
       const btn = document.getElementById('btn-unified-save');
       btn.classList.add('btn-loading'); btn.innerText = "저장 중...";
