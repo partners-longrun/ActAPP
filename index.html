@@ -23,6 +23,7 @@
 
   <div class="w-full h-[100vh] sm:h-[850px] sm:max-w-md bg-white sm:rounded-[2rem] sm:shadow-2xl overflow-hidden flex flex-col relative shadow-inner">
 
+    <!-- 로그인 화면 -->
     <div id="view-login" class="flex flex-col items-center justify-center h-full p-8 fade-in bg-[#f8fafc]">
       <div class="w-24 h-24 bg-[#ea580c] rounded-3xl flex items-center justify-center shadow-lg mb-8"><i data-lucide="calendar" class="w-12 h-12 text-white"></i></div>
       <div class="text-center space-y-2 mb-12"><h1 class="text-2xl font-bold text-gray-800">파트너스 활동 관리</h1><p class="text-gray-500 text-sm mt-2">영업 활동을 스마트하게 기록하세요.</p></div>
@@ -36,6 +37,7 @@
       </div>
     </div>
 
+    <!-- 기본 정보 입력 화면 -->
     <div id="view-setup" class="hidden-view flex flex-col h-full p-6 fade-in bg-white">
       <h2 class="text-2xl font-bold text-gray-900 mb-8 mt-4">기본 정보 입력</h2>
       <div class="space-y-5 flex-1">
@@ -48,6 +50,7 @@
       <button id="btnStart" disabled onclick="startApp()" class="w-full bg-gray-300 text-white font-bold py-4 rounded-xl mt-4 transition">시작하기</button>
     </div>
 
+    <!-- 메인 앱 헤더 -->
     <div id="view-app-header" class="bg-white px-6 py-4 rounded-b-3xl shadow-sm z-10 flex justify-between items-center border-b border-slate-100 hidden-view">
       <div>
         <h2 class="text-lg font-bold text-gray-900"><span id="displayName">파트너</span>님, 환영합니다</h2>
@@ -59,8 +62,10 @@
       </div>
     </div>
 
+    <!-- 메인 컨텐츠 영역 -->
     <div class="flex-1 overflow-y-auto p-4 pb-24 relative" id="mainContentArea">
       
+      <!-- [탭 0] 홈 대시보드 -->
       <div id="tab-home" class="hidden-view fade-in p-2 space-y-6">
         <section>
           <div class="flex items-center justify-between mb-4">
@@ -81,6 +86,7 @@
         </section>
       </div>
 
+      <!-- [탭 1] 활동 기록 -->
       <div id="tab-activity" class="hidden-view fade-in p-2">
         <div class="flex justify-between items-center mb-4 bg-white p-3 rounded-xl shadow-sm border border-slate-100">
           <button id="btnPrevWeek" onclick="changeWeek(-1)" class="p-2 bg-slate-50 rounded-lg transition active:scale-95"><i data-lucide="chevron-left" class="w-5 h-5 text-slate-600"></i></button>
@@ -95,6 +101,7 @@
         <button id="btn-unified-save" onclick="handleUnifiedSave()" class="w-full font-bold py-4 rounded-xl transition text-sm shadow-md mt-2"></button>
       </div>
       
+      <!-- [탭 2] 통계 -->
       <div id="tab-stats" class="hidden-view fade-in p-2">
         <div class="flex justify-between items-start" style="margin-top: 4px;">
           <p class="text-[11px] text-slate-500 leading-relaxed flex-1">누적 활동 결과에 따른 통계입니다.<br>활동관리에 참고하시기 바랍니다.</p>
@@ -110,6 +117,7 @@
         <div id="convGrid" class="grid grid-cols-2 gap-3 mt-3"></div>
       </div>
 
+      <!-- [탭 3] 설정 -->
       <div id="tab-settings" class="hidden-view fade-in p-2 space-y-4">
         <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-center relative">
            <p class="text-xs font-bold text-slate-500 mb-1">인증된 파트너 정보</p>
@@ -142,6 +150,7 @@
       </div>
     </div>
 
+    <!-- 하단 내비게이션 -->
     <div id="view-nav" class="absolute bottom-0 w-full bg-white border-t border-gray-200 flex justify-around pb-6 pt-3 sm:rounded-b-[2rem] hidden-view">
       <button onclick="switchTab('tab-home', this)" class="nav-btn flex flex-col items-center text-[#ea580c]"><i data-lucide="home" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">홈</span></button>
       <button onclick="switchTab('tab-activity', this)" class="nav-btn flex flex-col items-center text-gray-400"><i data-lucide="calendar" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">활동 기록</span></button>
@@ -319,12 +328,18 @@
       
       if(res) {
         viewContext = context; activityData = res;
-        // [핵심수정] 캘린더가 비어있다면(calendarEmpty:true), 시트에 데이터가 있더라도 수동 안내 팝업 출력
-        if (res.synced && !hasAlertedSync) {
-          if (res.calendarEmpty) alert("캘린더에 활동 일정이 없습니다.\n활동 내용을 수동으로 입력/저장해 주세요.");
-          else alert('캘린더 일정대로 단계별 활동을 저장하였습니다.');
-          hasAlertedSync = true;
+        
+        // [수정점] 캘린더가 비어있을 경우 (res.calendarEmpty가 true일 때) 최우선으로 안내 팝업을 표시
+        if (!hasAlertedSync) {
+          if (res.calendarEmpty) {
+            alert("캘린더에 활동 일정이 없습니다.\n활동 내용을 수동으로 입력/저장해 주세요.");
+            hasAlertedSync = true;
+          } else if (res.synced) {
+            alert('캘린더 일정대로 단계별 활동을 저장하였습니다.');
+            hasAlertedSync = true;
+          }
         }
+
         if (offset === 0) {
           homeData = res; renderHomeDashboard(); prefetchStatsData();
           if (res.calError) { alert("캘린더 데이터를 불러오지 못했습니다.\n[설정] 탭에서 '활동관리앱 계정에 캘린더 공유하기'를 완료해 주세요."); document.getElementById('syncStatusMsg').innerHTML = `<div class="w-2 h-2 rounded-full bg-red-500 mr-1.5"></div> 공유 대기중`; } 
@@ -343,24 +358,24 @@
       document.getElementById('cardsContainer').innerHTML = buildCardHtml('currPlan', viewContext.currWeek, viewContext.currMonday, '예정', false, 'text-blue-600') + buildCardHtml('currActual', viewContext.currWeek, viewContext.currMonday, '결과', true, 'text-[#ea580c]') + buildCardHtml('nextPlan', viewContext.nextWeek, viewContext.nextMonday, '예정', true, 'text-blue-600');
       lucide.createIcons();
       fillCardData('currPlan', activityData.currPlan); fillCardData('currActual', activityData.currActual); fillCardData('nextPlan', activityData.nextPlan);
+      
       updateUnifiedButtonState(activityData.isClosed);
-    }
-
-    function fillCardData(id, obj) {
-      stages.forEach(s => { let input = document.getElementById(`input_${id}_${s}`); input.value = obj[s] || ''; input.disabled = false; });
-      let prm = document.getElementById(`input_${id}_보험료`); prm.value = obj['보험료'] || ''; prm.disabled = false; formatCurrency(prm); calcSum(id);
     }
 
     function updateUnifiedButtonState(isClosed) {
       const btn = document.getElementById('btn-unified-save');
+      
       if (isClosed) {
         btn.className = "w-full bg-slate-400 text-white font-bold py-4 rounded-xl transition text-sm shadow-md mt-2";
         btn.innerText = "입력한 값으로 활동 업데이트하기";
       } else {
         btn.className = "w-full bg-[#ea580c] text-white font-bold py-4 rounded-xl transition text-sm shadow-md mt-2";
-        // [핵심수정] 캘린더가 비어있다면 버튼 이름을 '결과 및 예정 저장하기'로 고정
-        if (globalData.isManualMode || activityData.calendarEmpty) btn.innerText = "결과 및 예정 저장하기";
-        else btn.innerText = "주 마감하기 (결과 및 예정)";
+        // [수정점] 시트 마감과 상관없이 캘린더가 비어있다면 무조건 수동 사용자 모드로 버튼 변경
+        if (globalData.isManualMode || activityData.calendarEmpty) {
+          btn.innerText = "결과 및 예정 저장하기";
+        } else {
+          btn.innerText = "주 마감하기 (결과 및 예정)";
+        }
       }
     }
 
