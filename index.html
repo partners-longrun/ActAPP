@@ -8,6 +8,24 @@
   <title>파트너스 활동 관리</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- [규칙 1] 카카오톡 인앱 브라우저 강제 탈출 (사용자 지정 기본 브라우저 실행) -->
+  <script>
+    (function() {
+      const ua = navigator.userAgent || navigator.vendor || window.opera;
+      if (/KAKAOTALK/i.test(ua)) {
+        const currentUrl = window.location.href;
+        if (/Android/i.test(ua)) {
+          // 크롬 패키지 지정을 제거하여 사용자가 지정한 스마트폰 '시스템 기본 브라우저'로 강제 오픈
+          window.location.href = 'intent://' + window.location.host + window.location.pathname + window.location.search + '#Intent;scheme=https;end';
+        } else if (/iPhone|iPad|iPod/i.test(ua)) {
+          // iOS: 카카오톡 아웃링크 프로토콜을 통해 사파리 및 기본 브라우저로 강제 오픈
+          window.location.href = 'kakaotalk://web/openExternalApp?url=' + encodeURIComponent(currentUrl);
+        }
+      }
+    })();
+  </script>
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap');
     body { font-family: 'Pretendard', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
@@ -24,22 +42,36 @@
   <div class="w-full h-[100vh] sm:h-[850px] sm:max-w-md bg-white sm:rounded-[2rem] sm:shadow-2xl overflow-hidden flex flex-col relative shadow-inner">
 
     <!-- 로그인 화면 -->
-    <div id="view-login" class="flex flex-col items-center justify-center h-full p-8 fade-in bg-[#f8fafc]">
-      <div class="w-24 h-24 bg-[#ea580c] rounded-3xl flex items-center justify-center shadow-lg mb-8"><i data-lucide="calendar" class="w-12 h-12 text-white"></i></div>
-      <div class="text-center space-y-2 mb-12"><h1 class="text-2xl font-bold text-gray-800">파트너스 활동 관리</h1><p class="text-gray-500 text-sm mt-2">영업 활동을 스마트하게 기록하세요.</p></div>
-      <div class="w-full space-y-3">
-        <button onclick="selectLoginMode(false)" class="w-full bg-white border border-gray-300 text-gray-700 font-bold py-4 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-3 active:scale-95 transition">
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5"/><span>Google 계정으로 시작하기</span>
-        </button>
-        <button onclick="selectLoginMode(true)" class="w-full bg-slate-100 text-slate-600 font-bold py-4 px-4 rounded-xl shadow-sm flex items-center justify-center active:scale-95 transition text-sm">
-          구글계정 연결없이 사용하기 (수동입력)
-        </button>
+    <div id="view-login" class="flex flex-col h-full p-6 justify-between fade-in bg-[#f8fafc] overflow-y-auto">
+      <div class="flex flex-col items-center justify-center flex-1 py-8">
+        <div class="w-20 h-20 bg-[#ea580c] rounded-3xl flex items-center justify-center shadow-lg mb-6"><i data-lucide="calendar" class="w-10 h-10 text-white"></i></div>
+        <div class="text-center space-y-2 mb-10"><h1 class="text-2xl font-bold text-gray-800">파트너스 활동 관리</h1><p class="text-gray-500 text-sm mt-1">영업 활동을 스마트하게 기록하세요.</p></div>
+        <div class="w-full space-y-3">
+          <button onclick="selectLoginMode(false)" class="w-full bg-white border border-gray-300 text-gray-700 font-bold py-4 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-3 active:scale-95 transition">
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5"/><span>Google 계정으로 시작하기</span>
+          </button>
+          <button onclick="selectLoginMode(true)" class="w-full bg-slate-100 text-slate-600 font-bold py-4 px-4 rounded-xl shadow-sm flex items-center justify-center active:scale-95 transition text-sm">
+            구글계정 연결없이 사용하기 (수동입력)
+          </button>
+        </div>
+      </div>
+      
+      <!-- 최초 화면 설치 가이드 카드 -->
+      <div class="pwa-guide-el bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-4 shadow-sm space-y-2 mb-2 hidden-view">
+        <div class="flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-white"><i data-lucide="smartphone" class="w-4 h-4"></i></div>
+          <h4 class="font-bold text-xs text-slate-800">홈 화면에 앱으로 설치하는 방법</h4>
+        </div>
+        <div class="text-[11px] text-slate-600 space-y-1.5 leading-relaxed">
+          <p>• <span class="font-bold text-slate-800">아이폰(Safari):</span> 하단 <span class="font-bold text-slate-800">[공유 버튼 <i data-lucide="share" class="w-3.5 h-3.5 inline"></i>]</span> 누르고 <span class="font-bold text-slate-800">[홈 화면에 추가]</span> 클릭</p>
+          <p>• <span class="font-bold text-slate-800">안드로이드(기본브라우저):</span> 우측 상단 메뉴 버튼 누르고 <span class="font-bold text-slate-800">[앱 설치]</span> 또는 <span class="font-bold text-slate-800">[홈 화면에 추가]</span> 클릭</p>
+        </div>
       </div>
     </div>
 
     <!-- 기본 정보 입력 화면 -->
-    <div id="view-setup" class="hidden-view flex flex-col h-full p-6 fade-in bg-white">
-      <h2 class="text-2xl font-bold text-gray-900 mb-8 mt-4">기본 정보 입력</h2>
+    <div id="view-setup" class="hidden-view flex flex-col h-full p-6 fade-in bg-white overflow-y-auto">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6 mt-4">기본 정보 입력</h2>
       <div class="space-y-5 flex-1">
         <div><label class="block text-sm font-bold text-gray-700 mb-2">파트너 이름</label><input type="text" id="inputName" class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none"></div>
         <div><label class="block text-sm font-bold text-gray-700 mb-2">파트너 사번</label><input type="text" id="inputEmpId" class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none"></div>
@@ -47,7 +79,20 @@
         <button onclick="verifyPartner()" id="btnVerify" class="w-full bg-[#1e293b] text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 transition mt-2">소속 정보 확인</button>
         <div id="affiliationInfo" class="hidden-view bg-[#f8fafc] p-4 rounded-xl border border-slate-200 flex items-center space-x-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600"></i><div><p class="text-[11px] font-bold text-slate-500">인증 완료</p><p id="affiliationText" class="text-sm font-bold text-slate-800 mt-0.5">소속: -</p></div></div>
       </div>
-      <button id="btnStart" disabled onclick="startApp()" class="w-full bg-gray-300 text-white font-bold py-4 rounded-xl mt-4 transition">시작하기</button>
+      
+      <!-- 기본 정보 화면 아래 가이드 배치 -->
+      <div class="pwa-guide-el bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-4 shadow-sm space-y-2 my-4 hidden-view">
+        <div class="flex items-center space-x-2">
+          <div class="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white"><i data-lucide="smartphone" class="w-3.5 h-3.5"></i></div>
+          <h4 class="font-bold text-xs text-slate-800">홈 화면에 앱으로 설치하는 방법</h4>
+        </div>
+        <div class="text-[11px] text-slate-600 space-y-1.5 leading-relaxed">
+          <p>• <span class="font-bold text-slate-800">아이폰(Safari):</span> 하단 <span class="font-bold text-slate-800">[공유 <i data-lucide="share" class="w-3 inline"></i>]</span> -> <span class="font-bold text-slate-800">[홈 화면에 추가]</span></p>
+          <p>• <span class="font-bold text-slate-800">안드로이드:</span> 상단/하단 메뉴 -> <span class="font-bold text-slate-800">[앱 설치]</span> 또는 <span class="font-bold text-slate-800">[홈 화면에 추가]</span></p>
+        </div>
+      </div>
+
+      <button id="btnStart" disabled onclick="startApp()" class="w-full bg-gray-300 text-white font-bold py-4 rounded-xl mt-2 transition">시작하기</button>
     </div>
 
     <!-- 메인 앱 헤더 -->
@@ -58,6 +103,12 @@
       </div>
       <div class="flex items-center space-x-2">
         <div class="text-right"><div class="text-sm font-bold text-slate-800" id="headerWeek">0주차</div><div class="text-[10px] font-medium text-slate-500" id="headerDate">YYYY-MM-DD(요일)</div></div>
+        
+        <!-- 우측 상단 설치 아이콘 (녹색 버튼) -->
+        <button id="btn-pwa-install" onclick="triggerPwaInstall()" class="p-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 active:scale-90 transition cursor-pointer hidden-view">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-600"></i>
+        </button>
+
         <button onclick="manualReload()" class="p-1.5 rounded-full bg-orange-50 active:scale-90 transition cursor-pointer"><i data-lucide="refresh-cw" id="headerReloadIcon" class="w-5 h-5 text-[#ea580c]"></i></button>
       </div>
     </div>
@@ -67,6 +118,25 @@
       
       <!-- [탭 0] 홈 대시보드 -->
       <div id="tab-home" class="hidden-view fade-in p-2 space-y-6">
+        
+        <!-- 홈 화면 내부 PWA 가이드 영역 -->
+        <div class="pwa-guide-el bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-4 shadow-sm space-y-3 hidden-view">
+          <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white"><i data-lucide="smartphone" class="w-4 h-4"></i></div>
+            <h4 class="font-bold text-sm text-slate-800">홈 화면에 앱으로 설치하는 방법</h4>
+          </div>
+          <div class="text-xs text-slate-600 space-y-2 leading-relaxed">
+            <div class="p-2.5 bg-white/80 rounded-xl border border-emerald-50/50">
+              <p class="font-bold text-emerald-800 mb-1">📱 아이폰 (Safari 브라우저 전용)</p>
+              <p>하단의 <span class="font-bold text-slate-800">[공유 버튼 <i data-lucide="share" class="w-3.5 h-3.5 inline"></i>]</span>을 누르고 <span class="font-bold text-slate-800">[홈 화면에 추가]</span>를 선택하세요.</p>
+            </div>
+            <div class="p-2.5 bg-white/80 rounded-xl border border-emerald-50/50">
+              <p class="font-bold text-emerald-800 mb-1">🤖 안드로이드 (기본 인터넷 브라우저)</p>
+              <p>우측 상단의 <span class="font-bold text-emerald-700">[설치 아이콘 <i data-lucide="plus-circle" class="w-3.5 h-3.5 inline text-emerald-600"></i>]</span>을 클릭하거나 브라우저 메뉴에서 <span class="font-bold text-slate-800">[앱 설치]</span> 또는 <span class="font-bold text-slate-800">[홈 화면에 추가]</span>를 선택하세요.</p>
+            </div>
+          </div>
+        </div>
+
         <section>
           <div class="flex items-center justify-between mb-4">
             <h3 class="font-bold text-[16px] text-slate-800 border-l-4 border-[#ea580c] pl-2">이번 주 활동 진도 (목표 대비)</h3>
@@ -167,7 +237,56 @@
     let homeContext = {}; let viewContext = {}; let currentWeekOffset = 0;
     let homeData = null; let activityData = null; let statsCache = {};
     let hasAlertedSync = false; 
+    let deferredPrompt; 
     const stages = ['TA', 'AP', 'P', 'C', 'N', '소개'];
+
+    // PWA 상태(설치 여부) 확인 및 가이드 노출 동적 제어
+    function checkPwaStatus() {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      const guides = document.querySelectorAll('.pwa-guide-el');
+      const installBtn = document.getElementById('btn-pwa-install');
+      
+      if (isStandalone) {
+        guides.forEach(el => el.classList.add('hidden-view'));
+        if (installBtn) installBtn.classList.add('hidden-view');
+      } else {
+        guides.forEach(el => el.classList.remove('hidden-view'));
+        if (installBtn) installBtn.classList.remove('hidden-view');
+      }
+      try { lucide.createIcons(); } catch(e) {}
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      checkPwaStatus(); 
+    });
+
+    function triggerPwaInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+          }
+          deferredPrompt = null;
+        });
+      } else {
+        alert("[홈 화면에 앱 설치 안내]\n\n📱 아이폰(Safari):\n하단 중앙의 '공유 버튼(네모 화살표)'을 누르고 스크롤을 내려 '홈 화면에 추가'를 눌러주세요.\n\n🤖 안드로이드(기본 인터넷):\n우측 상단의 '삼점 메뉴' 아이콘 또는 하단 메뉴바를 누르고 '앱 설치' 또는 '홈 화면에 추가'를 눌러주세요.");
+      }
+    }
+
+    function checkDataEmpty(data) {
+      if (!data) return true;
+      let total = 0;
+      stages.forEach(s => {
+        total += parseInt((data.currActual || {})[s]) || 0;
+        total += parseInt((data.nextPlan || {})[s]) || 0;
+      });
+      total += parseInt((data.currActual || {})['보험료']) || 0;
+      total += parseInt((data.nextPlan || {})['보험료']) || 0;
+      return total === 0;
+    }
 
     async function callApi(data) {
       try {
@@ -179,6 +298,7 @@
     window.onload = function() {
       const savedUser = localStorage.getItem('partnersAppUser');
       if (savedUser) { globalData = JSON.parse(savedUser); setupUserSettings(); showApp(); initActivityScreen(); }
+      checkPwaStatus(); 
     };
 
     function showApp() { 
@@ -187,6 +307,7 @@
       document.getElementById('view-app-header').classList.remove('hidden-view');
       document.getElementById('view-nav').classList.remove('hidden-view');
       switchTab('tab-home', document.querySelector('.nav-btn'));
+      checkPwaStatus(); 
     }
 
     function selectLoginMode(isManual) { 
@@ -194,6 +315,7 @@
       if (isManual) document.getElementById('emailInputWrap').classList.add('hidden-view');
       else document.getElementById('emailInputWrap').classList.remove('hidden-view');
       switchView('view-setup'); 
+      checkPwaStatus();
     }
     
     function switchView(id) { document.querySelectorAll('div[id^="view-"]').forEach(el => el.classList.add('hidden-view')); document.getElementById(id).classList.remove('hidden-view'); }
@@ -336,11 +458,10 @@
         if (!hasAlertedSync) {
           if (res.calendarEmpty) {
             alert("캘린더에 활동 일정이 없습니다.\n활동 내용을 수동으로 입력/저장해 주세요.");
-            hasAlertedSync = true;
           } else if (res.synced) {
             alert('캘린더 일정대로 단계별 활동을 저장하였습니다.');
-            hasAlertedSync = true;
           }
+          hasAlertedSync = true;
         }
 
         if (offset === 0) {
@@ -374,7 +495,6 @@
       }
     }
 
-    // [핵심수정] 0 값 증발 방어 로직 추가
     function fillCardData(id, obj) {
       if(!obj) obj = {};
       stages.forEach(s => { 
@@ -428,7 +548,7 @@
 
     function getPayload(id) { let v = {}; stages.forEach(s => v[s] = document.getElementById(`input_${id}_${s}`).value); v['활동계'] = document.getElementById(`sum_${id}`).innerText; v['보험료'] = document.getElementById(`input_${id}_보험료`).value.replace(/[^0-9]/g, ''); return v; }
     function manualReload() { statsCache = {}; if (currentWeekOffset !== 0) loadDataForOffset(0); loadDataForOffset(currentWeekOffset); }
-    function switchTab(id, btn) { document.querySelectorAll('#mainContentArea > div').forEach(el => el.classList.add('hidden-view')); document.getElementById(id).classList.remove('hidden-view'); document.querySelectorAll('.nav-btn').forEach(el => { el.classList.replace('text-[#ea580c]', 'text-gray-400'); }); btn.classList.replace('text-gray-400', 'text-[#ea580c]'); document.getElementById('mainContentArea').scrollTop = 0; if(id === 'tab-stats') loadStatsData(); }
+    function switchTab(id, btn) { document.querySelectorAll('#mainContentArea > div').forEach(el => el.classList.add('hidden-view')); document.getElementById(id).classList.remove('hidden-view'); document.querySelectorAll('.nav-btn').forEach(el => { el.classList.replace('text-[#ea580c]', 'text-gray-400'); }); btn.classList.replace('text-gray-400', 'text-[#ea580c]'); document.getElementById('mainContentArea').scrollTop = 0; if(id === 'tab-stats') loadStatsData(); checkPwaStatus(); }
     async function prefetchStatsData() { const res = await callApi({ action: 'getStats', empId: globalData.empId, weeksLimit: document.getElementById('statsPeriod').value, year: homeContext.currYear, week: homeContext.currWeek }); if(res) statsCache[document.getElementById('statsPeriod').value] = { data: res, time: Date.now() }; }
 
     function renderHomeDashboard() {
