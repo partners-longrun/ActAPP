@@ -1,6 +1,6 @@
 {
-  "name": "파트너스 활동 관리",
-  "short_name": "파트너스",
+  "name": "파트너스 영업활동 관리",
+  "short_name": "영업활동 관리",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
