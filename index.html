@@ -9,6 +9,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   
+  <!-- Firebase SDK (v8 호환 버전) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
+  
   <!-- [규칙 1] 카카오톡 인앱 브라우저 강제 탈출 (사용자 지정 기본 브라우저 실행) -->
   <script>
     (function() {
@@ -254,6 +258,30 @@
     lucide.createIcons();
     const API_URL = "https://script.google.com/macros/s/AKfycbzMULbAaJw6HUBnKlALwgfV08uv3D4Su6JPbMnLPQ0F3sXb_CjJcTl9GBlJB2TAHHXs/exec";
 
+    // Firebase Config 정보 연동
+    const firebaseConfig = {
+      apiKey: "AIzaSyCTL5vWbHtYfBuuLUph2n18eK8YUHigeB0",
+      authDomain: "actapp-30cef.firebaseapp.com",
+      projectId: "actapp-30cef",
+      storageBucket: "actapp-30cef.firebasestorage.app",
+      messagingSenderId: "249245241386",
+      appId: "1:249245241386:web:ab03191cf3513b5779f353",
+      measurementId: "G-WWH0NV0VBN"
+    };
+    const FCM_VAPID_KEY = "BLdIlD21LIC1PQtqKDEsBbNHeOvvgYHKj4phABNSsr8jPOpWK1ospY31wKEa5sTWDLVqhauMgr-62ds1FatQrdQ";
+
+    let messaging = null;
+    try {
+      if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+        firebase.initializeApp(firebaseConfig);
+        if (firebase.messaging.isSupported()) {
+          messaging = firebase.messaging();
+        }
+      }
+    } catch (e) {
+      console.warn("Firebase 초기화 실패:", e);
+    }
+
     let globalData = { isManualMode: false, goals: {}, email: "" };
     let homeContext = {}; let viewContext = {}; let currentWeekOffset = 0;
     let homeData = null; let activityData = null; let statsCache = {};
@@ -333,7 +361,13 @@
 
     window.onload = function() {
       const savedUser = localStorage.getItem('partnersAppUser');
-      if (savedUser) { globalData = JSON.parse(savedUser); setupUserSettings(); showApp(); initActivityScreen(); }
+      if (savedUser) { 
+        globalData = JSON.parse(savedUser); 
+        setupUserSettings(); 
+        showApp(); 
+        initActivityScreen(); 
+        requestPushPermissionAndSaveToken();
+      }
       checkPwaStatus(); 
     };
 
@@ -380,6 +414,42 @@
       setupUserSettings(); showApp(); 
       if (!globalData.isManualMode) alert("[안내] 원활한 활동 관리를 위해\n[설정] 탭으로 이동하여 '활동관리앱 계정에 캘린더 공유하기' 버튼을 눌러 계정 공유(필수)를 진행해 주시기 바랍니다.");
       initActivityScreen(); 
+      requestPushPermissionAndSaveToken();
+    }
+
+    async function requestPushPermissionAndSaveToken() {
+      if (!messaging) {
+        console.warn("FCM 메시징 객체가 활성화되지 않았습니다. Firebase 설정을 완료해 주세요.");
+        return;
+      }
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          const registration = await navigator.serviceWorker.ready;
+          const currentToken = await messaging.getToken({
+            vapidKey: FCM_VAPID_KEY,
+            serviceWorkerRegistration: registration
+          });
+          
+          if (currentToken) {
+            console.log("FCM 토큰 발급 성공:", currentToken);
+            const res = await callApi({
+              action: 'savePushToken',
+              empId: globalData.empId,
+              pushToken: currentToken
+            });
+            if (res && res.success) {
+              console.log("서버에 FCM 토큰 등록 완료");
+            }
+          } else {
+            console.warn("토큰을 가져올 수 없습니다. 권한 설정을 확인하세요.");
+          }
+        } else {
+          console.warn("알림 권한이 거부되었습니다.");
+        }
+      } catch (err) {
+        console.error("푸시 알림 토큰 획득 중 오류 발생:", err);
+      }
     }
 
     function logout() { localStorage.removeItem('partnersAppUser'); location.reload(); }
