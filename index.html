@@ -57,14 +57,23 @@
       </div>
       
       <!-- 최초 화면 설치 가이드 카드 -->
-      <div class="pwa-guide-el bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-4 shadow-sm space-y-2 mb-2 hidden-view">
-        <div class="flex items-center space-x-2">
-          <div class="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-white"><i data-lucide="smartphone" class="w-4 h-4"></i></div>
-          <h4 class="font-bold text-xs text-slate-800">홈 화면에 앱으로 설치하는 방법</h4>
+      <div class="pwa-guide-el bg-[#f0f4ff] border border-indigo-100 rounded-3xl p-5 shadow-sm space-y-4 mb-4 hidden-view">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-[#e0e7ff] rounded-xl flex items-center justify-center">
+            <i data-lucide="download" class="w-5 h-5 text-orange-500"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-[15px] text-slate-800 leading-tight">앱으로 더욱 편리하게</h4>
+            <p class="text-xs text-slate-500 mt-0.5">홈 화면에 바로가기를 추가해 보세요</p>
+          </div>
         </div>
-        <div class="text-[11px] text-slate-600 space-y-1.5 leading-relaxed">
-          <p>• <span class="font-bold text-slate-800">아이폰(Safari):</span> 하단 <span class="font-bold text-slate-800">[공유 버튼 <i data-lucide="share" class="w-3.5 h-3.5 inline"></i>]</span> 누르고 <span class="font-bold text-slate-800">[홈 화면에 추가]</span> 클릭</p>
-          <p>• <span class="font-bold text-slate-800">안드로이드(기본브라우저):</span> 우측 상단 메뉴 버튼 누르고 <span class="font-bold text-slate-800">[앱 설치]</span> 또는 <span class="font-bold text-slate-800">[홈 화면에 추가]</span> 클릭</p>
+        <div class="space-y-2">
+          <button onclick="triggerPwaInstall()" class="w-full bg-[#4f46e5] text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 transition flex justify-center items-center text-sm">
+            + 영업활동 관리 설치하기
+          </button>
+          <button onclick="openInstallGuideModal()" class="w-full bg-white text-gray-700 border border-gray-200 font-bold py-3.5 rounded-xl shadow-sm transition active:scale-95 flex justify-center items-center text-sm">
+            기기별 설치 방법 안내
+          </button>
         </div>
       </div>
     </div>
@@ -81,14 +90,23 @@
       </div>
       
       <!-- 기본 정보 화면 아래 가이드 배치 -->
-      <div class="pwa-guide-el bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-4 shadow-sm space-y-2 my-4 hidden-view">
-        <div class="flex items-center space-x-2">
-          <div class="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white"><i data-lucide="smartphone" class="w-3.5 h-3.5"></i></div>
-          <h4 class="font-bold text-xs text-slate-800">홈 화면에 앱으로 설치하는 방법</h4>
+      <div class="pwa-guide-el bg-[#f0f4ff] border border-indigo-100 rounded-3xl p-5 shadow-sm space-y-4 my-4 hidden-view">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-[#e0e7ff] rounded-xl flex items-center justify-center">
+            <i data-lucide="download" class="w-5 h-5 text-orange-500"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-[15px] text-slate-800 leading-tight">앱으로 더욱 편리하게</h4>
+            <p class="text-xs text-slate-500 mt-0.5">홈 화면에 바로가기를 추가해 보세요</p>
+          </div>
         </div>
-        <div class="text-[11px] text-slate-600 space-y-1.5 leading-relaxed">
-          <p>• <span class="font-bold text-slate-800">아이폰(Safari):</span> 하단 <span class="font-bold text-slate-800">[공유 <i data-lucide="share" class="w-3 inline"></i>]</span> -> <span class="font-bold text-slate-800">[홈 화면에 추가]</span></p>
-          <p>• <span class="font-bold text-slate-800">안드로이드:</span> 상단/하단 메뉴 -> <span class="font-bold text-slate-800">[앱 설치]</span> 또는 <span class="font-bold text-slate-800">[홈 화면에 추가]</span></p>
+        <div class="space-y-2">
+          <button onclick="triggerPwaInstall()" class="w-full bg-[#4f46e5] text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 transition flex justify-center items-center text-sm">
+            + 영업활동 관리 설치하기
+          </button>
+          <button onclick="openInstallGuideModal()" class="w-full bg-white text-gray-700 border border-gray-200 font-bold py-3.5 rounded-xl shadow-sm transition active:scale-95 flex justify-center items-center text-sm">
+            기기별 설치 방법 안내
+          </button>
         </div>
       </div>
 
@@ -120,20 +138,23 @@
       <div id="tab-home" class="hidden-view fade-in p-2 space-y-6">
         
         <!-- 홈 화면 내부 PWA 가이드 영역 -->
-        <div class="pwa-guide-el bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-4 shadow-sm space-y-3 hidden-view">
-          <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white"><i data-lucide="smartphone" class="w-4 h-4"></i></div>
-            <h4 class="font-bold text-sm text-slate-800">홈 화면에 앱으로 설치하는 방법</h4>
+        <div class="pwa-guide-el bg-[#f0f4ff] border border-indigo-100 rounded-3xl p-5 shadow-sm space-y-4 hidden-view">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-[#e0e7ff] rounded-xl flex items-center justify-center">
+              <i data-lucide="download" class="w-5 h-5 text-orange-500"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-[15px] text-slate-800 leading-tight">앱으로 더욱 편리하게</h4>
+              <p class="text-xs text-slate-500 mt-0.5">홈 화면에 바로가기를 추가해 보세요</p>
+            </div>
           </div>
-          <div class="text-xs text-slate-600 space-y-2 leading-relaxed">
-            <div class="p-2.5 bg-white/80 rounded-xl border border-emerald-50/50">
-              <p class="font-bold text-emerald-800 mb-1">📱 아이폰 (Safari 브라우저 전용)</p>
-              <p>하단의 <span class="font-bold text-slate-800">[공유 버튼 <i data-lucide="share" class="w-3.5 h-3.5 inline"></i>]</span>을 누르고 <span class="font-bold text-slate-800">[홈 화면에 추가]</span>를 선택하세요.</p>
-            </div>
-            <div class="p-2.5 bg-white/80 rounded-xl border border-emerald-50/50">
-              <p class="font-bold text-emerald-800 mb-1">🤖 안드로이드 (기본 인터넷 브라우저)</p>
-              <p>우측 상단의 <span class="font-bold text-emerald-700">[설치 아이콘 <i data-lucide="plus-circle" class="w-3.5 h-3.5 inline text-emerald-600"></i>]</span>을 클릭하거나 브라우저 메뉴에서 <span class="font-bold text-slate-800">[앱 설치]</span> 또는 <span class="font-bold text-slate-800">[홈 화면에 추가]</span>를 선택하세요.</p>
-            </div>
+          <div class="space-y-2">
+            <button onclick="triggerPwaInstall()" class="w-full bg-[#4f46e5] text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 transition flex justify-center items-center text-sm">
+              + 영업활동 관리 설치하기
+            </button>
+            <button onclick="openInstallGuideModal()" class="w-full bg-white text-gray-700 border border-gray-200 font-bold py-3.5 rounded-xl shadow-sm transition active:scale-95 flex justify-center items-center text-sm">
+              기기별 설치 방법 안내
+            </button>
           </div>
         </div>
 
@@ -272,7 +293,22 @@
           deferredPrompt = null;
         });
       } else {
-        alert("[홈 화면에 앱 설치 안내]\n\n📱 아이폰(Safari):\n하단 중앙의 '공유 버튼(네모 화살표)'을 누르고 스크롤을 내려 '홈 화면에 추가'를 눌러주세요.\n\n🤖 안드로이드(기본 인터넷):\n우측 상단의 '삼점 메뉴' 아이콘 또는 하단 메뉴바를 누르고 '앱 설치' 또는 '홈 화면에 추가'를 눌러주세요.");
+        openInstallGuideModal();
+      }
+    }
+
+    function openInstallGuideModal() {
+      const modal = document.getElementById('pwa-guide-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        try { lucide.createIcons(); } catch(e) {}
+      }
+    }
+
+    function closeInstallGuideModal() {
+      const modal = document.getElementById('pwa-guide-modal');
+      if (modal) {
+        modal.classList.add('hidden');
       }
     }
 
@@ -587,6 +623,70 @@
       document.getElementById('convGrid').innerHTML = convs.map(c => `<div class="rounded-xl p-3 flex flex-col justify-center shadow-sm ${c.hl?'bg-orange-50/50 ring-1 ring-orange-200':'bg-white border-slate-200 border'}"><div class="flex justify-between items-end mb-2"><span class="text-[13px] font-extrabold text-slate-700 tracking-tight">${c.l}</span><span class="text-[13px] font-black ${getC(c.v)} leading-none">${c.v}%</span></div><div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden"><div class="${getB(c.v)} h-full rounded-full transition-all duration-700 ease-out" style="width: ${Math.min(c.v,100)}%"></div></div></div>`).join('');
     }
   </script>
+
+  <!-- 기기별 앱 설치 방법 안내 모달 -->
+  <div id="pwa-guide-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl p-6 relative flex flex-col space-y-5 fade-in">
+      
+      <!-- 헤더 -->
+      <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-1.5">
+          <div class="w-1 h-5 bg-indigo-600 rounded-full"></div>
+          <h3 class="font-bold text-base text-slate-800">기기별 앱 설치 방법 안내</h3>
+        </div>
+        <button onclick="closeInstallGuideModal()" class="text-gray-400 hover:text-gray-600 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      
+      <hr class="border-slate-100">
+      
+      <!-- 본문 -->
+      <div class="space-y-6 flex-1">
+        <!-- 안드로이드 -->
+        <div class="space-y-2">
+          <div class="flex items-center space-x-2">
+            <span class="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-[11px] font-bold">1</span>
+            <span class="font-bold text-sm text-slate-800">안드로이드 (크롬 / 삼성 인터넷)</span>
+          </div>
+          <ul class="text-[12px] text-slate-500 pl-7 list-disc space-y-1 leading-relaxed">
+            <li>상단의 '<span class="font-semibold text-slate-700">영업활동 관리 설치하기</span>' 버튼을 클릭하면 즉시 설치됩니다.</li>
+            <li>만약 버튼이 보이지 않는다면, 우측 상단 메뉴(점 3개 또는 줄 3개)를 누르고 '홈 화면에 추가' 또는 '앱 설치'를 선택하세요.</li>
+          </ul>
+        </div>
+
+        <!-- 아이폰 -->
+        <div class="space-y-2">
+          <div class="flex items-center space-x-2">
+            <span class="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-white text-[11px] font-bold">2</span>
+            <span class="font-bold text-sm text-slate-800">아이폰 / 아이패드 (iOS Safari)</span>
+          </div>
+          <ul class="text-[12px] text-slate-500 pl-7 list-disc space-y-1 leading-relaxed">
+            <li>아이폰은 하단(또는 상단) 툴바의 공유 버튼(네모에 위쪽 화살표)을 누릅니다.</li>
+            <li>공유 메뉴에서 아래로 스크롤하여 '홈 화면에 추가'를 선택해 주세요.</li>
+          </ul>
+        </div>
+
+        <!-- PC -->
+        <div class="space-y-2">
+          <div class="flex items-center space-x-2">
+            <span class="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-white text-[11px] font-bold">3</span>
+            <span class="font-bold text-sm text-slate-800">PC (Chrome, Edge 등)</span>
+          </div>
+          <ul class="text-[12px] text-slate-500 pl-7 list-disc space-y-1 leading-relaxed">
+            <li>브라우저 우측 상단 주소창(URL바) 오른쪽에 표시되는 '설치 아이콘(모니터 모양에 아래 화살표)'을 클릭하면 설치됩니다.</li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- 하단 버튼 -->
+      <div class="flex justify-end pt-2">
+        <button onclick="closeInstallGuideModal()" class="bg-[#1e293b] text-white px-5 py-2 rounded-xl text-xs font-bold active:scale-95 transition">
+          닫기
+        </button>
+      </div>
+    </div>
+  </div>
 
   <script>
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Registration failed: ', err)); }); }
