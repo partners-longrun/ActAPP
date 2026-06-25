@@ -229,6 +229,19 @@
                <i data-lucide="share-2" class="w-3.5 h-3.5"></i><span>활동관리앱 계정에 캘린더 공유하기</span>
              </button>
            </div>
+           
+           <!-- 알림 수신 토글 스위치 -->
+           <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-100 mb-4 text-left flex justify-between items-center">
+             <div>
+               <p class="text-xs font-bold text-slate-700">활동 기록 알림 수신</p>
+               <p class="text-[10px] text-slate-400 mt-0.5">매주 수요일, 금요일 오후 5시 정기 알림</p>
+             </div>
+             <label class="relative inline-flex items-center cursor-pointer select-none">
+               <input type="checkbox" id="pushToggleBtn" onchange="togglePushNotification(this)" class="sr-only peer">
+               <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#ea580c]"></div>
+             </label>
+           </div>
+
            <hr class="my-5 border-slate-100">
            <button onclick="logout()" class="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl active:scale-95 text-sm">로그아웃</button>
         </div>
@@ -423,7 +436,7 @@
         return;
       }
       try {
-        const permission = await Notification.requestPermission();
+        const permission = Notification.permission;
         if (permission === 'granted') {
           const registration = await navigator.serviceWorker.ready;
           const currentToken = await messaging.getToken({
@@ -440,15 +453,85 @@
             });
             if (res && res.success) {
               console.log("서버에 FCM 토큰 등록 완료");
+              globalData.pushEnabled = true;
+              localStorage.setItem('partnersAppUser', JSON.stringify(globalData));
+              const pushBtn = document.getElementById('pushToggleBtn');
+              if (pushBtn) pushBtn.checked = true;
             }
-          } else {
-            console.warn("토큰을 가져올 수 없습니다. 권한 설정을 확인하세요.");
           }
-        } else {
-          console.warn("알림 권한이 거부되었습니다.");
         }
       } catch (err) {
         console.error("푸시 알림 토큰 획득 중 오류 발생:", err);
+      }
+    }
+
+    async function togglePushNotification(checkbox) {
+      if (!messaging) {
+        alert("FCM 메시징 서비스가 활성화되지 않았습니다. 파이어베이스 설정을 확인해 주세요.");
+        checkbox.checked = false;
+        return;
+      }
+      const isChecked = checkbox.checked;
+      if (isChecked) {
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            const registration = await navigator.serviceWorker.ready;
+            const currentToken = await messaging.getToken({
+              vapidKey: FCM_VAPID_KEY,
+              serviceWorkerRegistration: registration
+            });
+            if (currentToken) {
+              const res = await callApi({
+                action: 'savePushToken',
+                empId: globalData.empId,
+                pushToken: currentToken
+              });
+              if (res && res.success) {
+                alert("알림 수신이 활성화되었습니다.");
+                globalData.pushEnabled = true;
+                localStorage.setItem('partnersAppUser', JSON.stringify(globalData));
+              } else {
+                alert("서버 등록에 실패했습니다.");
+                checkbox.checked = false;
+              }
+            } else {
+              alert("알림 토큰을 가져올 수 없습니다.");
+              checkbox.checked = false;
+            }
+          } else {
+            alert("알림 권한이 거부되었습니다. 스마트폰 설정에서 권한을 허용해 주세요.");
+            checkbox.checked = false;
+          }
+        } catch (err) {
+          console.error("알림 활성화 오류:", err);
+          alert("알림 등록 중 오류가 발생했습니다.");
+          checkbox.checked = false;
+        }
+      } else {
+        if (!confirm("정말 알림 수신을 해제하시겠습니까?")) {
+          checkbox.checked = true;
+          return;
+        }
+        try {
+          const res = await callApi({
+            action: 'savePushToken',
+            empId: globalData.empId,
+            pushToken: ""
+          });
+          if (res && res.success) {
+            alert("알림 수신 해제가 완료되었습니다.");
+            globalData.pushEnabled = false;
+            localStorage.setItem('partnersAppUser', JSON.stringify(globalData));
+          } else {
+            alert("서버 해제 처리에 실패했습니다.");
+            checkbox.checked = true;
+          }
+        } catch (err) {
+          console.error("알림 해제 오류:", err);
+          alert("알림 해제 중 오류가 발생했습니다.");
+          checkbox.checked = true;
+        }
       }
     }
 
@@ -460,6 +543,10 @@
       document.getElementById('settingTeam').innerText = globalData.teamName || '-';
       if (globalData.isManualMode) document.getElementById('settingEmailBlock').style.display = 'none';
       else { document.getElementById('settingEmailBlock').style.display = 'block'; document.getElementById('settingEmail').innerText = globalData.email || '미입력'; }
+      
+      const pushBtn = document.getElementById('pushToggleBtn');
+      if (pushBtn) pushBtn.checked = !!globalData.pushEnabled;
+
       let goalHtml = stages.map(s => `<div class="text-center"><p class="text-[11px] font-bold text-slate-500 mb-1">${s}</p><input type="number" id="goal_${s}" oninput="calcGoalSum()" class="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-orange-500" value="${globalData.goals[s]||''}"></div>`).join('');
       document.getElementById('goalInputs').innerHTML = goalHtml;
       document.getElementById('goal_활동계').value = globalData.goals['활동계'] || '';
@@ -561,6 +648,13 @@
       if(res) {
         viewContext = context; activityData = res;
         
+        if (res.pushEnabled !== undefined) {
+          globalData.pushEnabled = res.pushEnabled;
+          localStorage.setItem('partnersAppUser', JSON.stringify(globalData));
+          const pushBtn = document.getElementById('pushToggleBtn');
+          if (pushBtn) pushBtn.checked = res.pushEnabled;
+        }
+
         if (!hasAlertedSync) {
           if (res.calendarEmpty) {
             alert("캘린더에 활동 일정이 없습니다.\n활동 내용을 수동으로 입력/저장해 주세요.");
